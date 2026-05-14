@@ -2,6 +2,12 @@
 
 The latest version of the changelog can be found [here](https://github.com/Azure/bicep-registry-modules/blob/main/avm/ptn/sa/multi-agent-custom-automation-engine/CHANGELOG.md).
 
+## 0.2.4
+
+### Changes
+- Separated AI model deployments (GPT-4.1, GPT-4.1-mini, o4-mini) from the Cognitive Services account resource into `modules/ai-services-deployments.bicep` to resolve `AccountProvisioningStateInvalid` failures caused by inline private endpoint creation racing against account provisioning
+
+
 ## 0.2.3
 
 ### Changes

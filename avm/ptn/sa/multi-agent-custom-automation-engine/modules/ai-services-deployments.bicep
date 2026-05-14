@@ -23,7 +23,7 @@ param name string
 ])
 param sku string = 'S0'
 
-import { deploymentType } from 'br:mcr.microsoft.com/bicep/avm/res/cognitive-services/account:0.13.2'
+import { deploymentType } from 'br:mcr.microsoft.com/bicep/avm/res/cognitive-services/account:0.14.2'
 @description('Optional. Array of deployments about cognitive service accounts to create.')
 param deployments deploymentType[]?
 

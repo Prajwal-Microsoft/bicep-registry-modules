@@ -726,47 +726,7 @@ module aiFoundryAiServices 'br:mcr.microsoft.com/bicep/avm/res/cognitive-service
     apiProperties: {
       //staticsEnabled: false
     }
-    deployments: [
-      {
-        name: aiFoundryAiServicesModelDeployment.name
-        model: {
-          format: aiFoundryAiServicesModelDeployment.format
-          name: aiFoundryAiServicesModelDeployment.name
-          version: aiFoundryAiServicesModelDeployment.version
-        }
-        raiPolicyName: aiFoundryAiServicesModelDeployment.raiPolicyName
-        sku: {
-          name: aiFoundryAiServicesModelDeployment.sku.name
-          capacity: aiFoundryAiServicesModelDeployment.sku.capacity
-        }
-      }
-      {
-        name: aiFoundryAiServices41ModelDeployment.name
-        model: {
-          format: aiFoundryAiServices41ModelDeployment.format
-          name: aiFoundryAiServices41ModelDeployment.name
-          version: aiFoundryAiServices41ModelDeployment.version
-        }
-        raiPolicyName: aiFoundryAiServices41ModelDeployment.raiPolicyName
-        sku: {
-          name: aiFoundryAiServices41ModelDeployment.sku.name
-          capacity: aiFoundryAiServices41ModelDeployment.sku.capacity
-        }
-      }
-      {
-        name: aiFoundryAiServicesReasoningModelDeployment.name
-        model: {
-          format: aiFoundryAiServicesReasoningModelDeployment.format
-          name: aiFoundryAiServicesReasoningModelDeployment.name
-          version: aiFoundryAiServicesReasoningModelDeployment.version
-        }
-        raiPolicyName: aiFoundryAiServicesReasoningModelDeployment.raiPolicyName
-        sku: {
-          name: aiFoundryAiServicesReasoningModelDeployment.sku.name
-          capacity: aiFoundryAiServicesReasoningModelDeployment.sku.capacity
-        }
-      }
-    ]
+    deployments: [] // Model deployments are created separately below to avoid race condition with private endpoint creation
     networkAcls: {
       defaultAction: 'Allow'
       virtualNetworkRules: []
@@ -828,6 +788,58 @@ module aiFoundryAiServices 'br:mcr.microsoft.com/bicep/avm/res/cognitive-service
           }
         ])
       : []
+  }
+}
+
+// ========== AI Foundry: AI Services Model Deployments ========== //
+// Model deployments are created separately to avoid race condition: when deployments are inline,
+// the account stays in "Accepted" state longer, causing the private endpoint creation to fail
+// with AccountProvisioningStateInvalid.
+module aiFoundryAiServicesModelDeployments 'modules/ai-services-deployments.bicep' = {
+  name: take('module.ai-services-deployments.${aiFoundryAiServicesResourceName}', 64)
+  params: {
+    name: aiFoundryAiServices!.outputs.name
+    deployments: [
+      {
+        name: aiFoundryAiServicesModelDeployment.name
+        model: {
+          format: aiFoundryAiServicesModelDeployment.format
+          name: aiFoundryAiServicesModelDeployment.name
+          version: aiFoundryAiServicesModelDeployment.version
+        }
+        raiPolicyName: aiFoundryAiServicesModelDeployment.raiPolicyName
+        sku: {
+          name: aiFoundryAiServicesModelDeployment.sku.name
+          capacity: aiFoundryAiServicesModelDeployment.sku.capacity
+        }
+      }
+      {
+        name: aiFoundryAiServices41ModelDeployment.name
+        model: {
+          format: aiFoundryAiServices41ModelDeployment.format
+          name: aiFoundryAiServices41ModelDeployment.name
+          version: aiFoundryAiServices41ModelDeployment.version
+        }
+        raiPolicyName: aiFoundryAiServices41ModelDeployment.raiPolicyName
+        sku: {
+          name: aiFoundryAiServices41ModelDeployment.sku.name
+          capacity: aiFoundryAiServices41ModelDeployment.sku.capacity
+        }
+      }
+      {
+        name: aiFoundryAiServicesReasoningModelDeployment.name
+        model: {
+          format: aiFoundryAiServicesReasoningModelDeployment.format
+          name: aiFoundryAiServicesReasoningModelDeployment.name
+          version: aiFoundryAiServicesReasoningModelDeployment.version
+        }
+        raiPolicyName: aiFoundryAiServicesReasoningModelDeployment.raiPolicyName
+        sku: {
+          name: aiFoundryAiServicesReasoningModelDeployment.sku.name
+          capacity: aiFoundryAiServicesReasoningModelDeployment.sku.capacity
+        }
+      }
+    ]
   }
 }
 
