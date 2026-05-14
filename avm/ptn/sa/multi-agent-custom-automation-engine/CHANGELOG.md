@@ -7,6 +7,10 @@ The latest version of the changelog can be found [here](https://github.com/Azure
 ### Changes
 - Separated AI model deployments (GPT-4.1, GPT-4.1-mini, o4-mini) from the Cognitive Services account resource into `modules/ai-services-deployments.bicep` to resolve `AccountProvisioningStateInvalid` failures caused by inline private endpoint creation racing against account provisioning
 
+### Breaking Changes
+
+- None
+
 
 ## 0.2.3
 
