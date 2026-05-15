@@ -5,7 +5,7 @@ The latest version of the changelog can be found [here](https://github.com/Azure
 ## 0.2.4
 
 ### Changes
-- Separated AI model deployments (GPT-4.1, GPT-4.1-mini, o4-mini) from the Cognitive Services account resource into `modules/ai-services-deployments.bicep` to resolve `AccountProvisioningStateInvalid` failures caused by inline private endpoint creation racing against account provisioning
+- Separated the AI Services private endpoint creation from the Cognitive Services account module into a dedicated `avm/res/network/private-endpoint` module deployment, and added an explicit `dependsOn` from the AI Foundry project to the private endpoint, to resolve `AccountProvisioningStateInvalid` failures caused by inline private endpoint creation racing against account provisioning and inline model deployments
 
 ### Breaking Changes
 
