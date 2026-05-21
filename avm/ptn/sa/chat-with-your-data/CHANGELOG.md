@@ -2,6 +2,16 @@
 
 The latest version of the changelog can be found [here](https://github.com/Azure/bicep-registry-modules/blob/main/avm/ptn/sa/chat-with-your-data/CHANGELOG.md).
 
+## 0.2.2
+
+### Changes
+
+- Updated `enablePrivateNetworking` handling to use the module input value for dependent resources.
+
+### Breaking Changes
+
+- None
+
 ## 0.2.1
 
 ### Changes
