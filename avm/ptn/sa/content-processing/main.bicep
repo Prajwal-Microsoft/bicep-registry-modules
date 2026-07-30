@@ -28,12 +28,12 @@ param location string = resourceGroup().location
 })
 param contentUnderstandingLocation string = 'WestUS'
 
-@description('Required. Location for the Azure AI Services deployment.')
+@description('Required. Location for the Azure AI Services deployment. Must support both Azure OpenAI gpt-5.1 (GlobalStandard) and Azure AI Content Understanding GA. If the deploymentType param is set to Standard, override the metadata.azd.usageName below to reference OpenAI.Standard.gpt-5.1 instead.')
 @metadata({
   azd: {
     type: 'location'
     usageName: [
-      'OpenAI.GlobalStandard.gpt-4o,100'
+      'OpenAI.GlobalStandard.gpt-5.1,30'
     ]
   }
 })
@@ -47,15 +47,15 @@ param aiServiceLocation string
 ])
 param deploymentType string = 'GlobalStandard'
 
-@description('Optional. Name of the GPT model to deploy: gpt-4o-mini | gpt-4o | gpt-4.')
-param gptModelName string = 'gpt-4o'
+@description('Optional. Name of the GPT model to deploy: gpt-5.1')
+param gptModelName string = 'gpt-5.1'
 
 @minLength(1)
 @description('Optional. Version of the GPT model to deploy:.')
 @allowed([
-  '2024-08-06'
+  '2025-11-13'
 ])
-param gptModelVersion string = '2024-08-06'
+param gptModelVersion string = '2025-11-13'
 
 @minValue(1)
 @description('Optional. Capacity of the GPT deployment: (minimum 10).')
@@ -601,11 +601,6 @@ module avmAiServices 'modules/account/aifoundry.bicep' = {
     diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspace!.outputs.resourceId }] : null
     roleAssignments: [
       {
-        principalId: avmManagedIdentity.outputs.principalId
-        roleDefinitionIdOrName: '8e3af657-a8ff-443c-a75c-2fe8c4bcb635' // Owner role
-        principalType: 'ServicePrincipal'
-      }
-      {
         principalId: avmContainerApp.outputs.systemAssignedMIPrincipalId!
         roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
         principalType: 'ServicePrincipal'
@@ -787,7 +782,12 @@ module avmContainerApp 'br/public:avm/res/app/container-app:0.19.0' = {
     environmentResourceId: avmContainerAppEnv.outputs.resourceId
     workloadProfileName: 'Consumption'
     enableTelemetry: enableTelemetry
-    registries: null
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
     managedIdentities: {
       systemAssigned: true
       userAssignedResourceIds: [
@@ -798,7 +798,7 @@ module avmContainerApp 'br/public:avm/res/app/container-app:0.19.0' = {
     containers: [
       {
         name: 'ca-${solutionSuffix}'
-        image: '${publicContainerImageEndpoint}/${appContainerImageName}:${containerImageTag}'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
         resources: {
           cpu: 4
@@ -836,7 +836,12 @@ module avmContainerApp_API 'br/public:avm/res/app/container-app:0.19.0' = {
     environmentResourceId: avmContainerAppEnv.outputs.resourceId
     workloadProfileName: 'Consumption'
     enableTelemetry: enableTelemetry
-    registries: null
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
     tags: tags
     managedIdentities: {
       systemAssigned: true
@@ -847,7 +852,7 @@ module avmContainerApp_API 'br/public:avm/res/app/container-app:0.19.0' = {
     containers: [
       {
         name: 'ca-${solutionSuffix}-api'
-        image: '${publicContainerImageEndpoint}/${apiContainerImageName}:${containerImageTag}'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
         resources: {
           cpu: 4
           memory: '8.0Gi'
@@ -947,7 +952,12 @@ module avmContainerApp_Web 'br/public:avm/res/app/container-app:0.19.0' = {
     environmentResourceId: avmContainerAppEnv.outputs.resourceId
     workloadProfileName: 'Consumption'
     enableTelemetry: enableTelemetry
-    registries: null
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
     tags: tags
     managedIdentities: {
       systemAssigned: true
@@ -975,7 +985,7 @@ module avmContainerApp_Web 'br/public:avm/res/app/container-app:0.19.0' = {
     containers: [
       {
         name: 'ca-${solutionSuffix}-web'
-        image: '${publicContainerImageEndpoint}/${webContainerImageName}:${containerImageTag}'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
         resources: {
           cpu: 4
           memory: '8.0Gi'
@@ -1239,7 +1249,12 @@ module avmContainerApp_update 'br/public:avm/res/app/container-app:0.19.0' = {
     enableTelemetry: enableTelemetry
     environmentResourceId: avmContainerAppEnv.outputs.resourceId
     workloadProfileName: 'Consumption'
-    registries: null
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
     tags: tags
     managedIdentities: {
       systemAssigned: true
@@ -1251,7 +1266,7 @@ module avmContainerApp_update 'br/public:avm/res/app/container-app:0.19.0' = {
     containers: [
       {
         name: 'ca-${solutionSuffix}'
-        image: '${publicContainerImageEndpoint}/${appContainerImageName}:${containerImageTag}'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
         resources: {
           cpu: 4
@@ -1291,7 +1306,7 @@ module avmContainerApp_update 'br/public:avm/res/app/container-app:0.19.0' = {
   }
 }
 
-module avmContainerApp_API_update 'br/public:avm/res/app/container-app:0.19.0' = {
+module avmContainerApp_API_update 'br/public:avm/res/app/container-app:0.22.1' = {
   name: take('avm.res.app.container-app-api.update.${solutionSuffix}', 64)
   params: {
     name: 'ca-${solutionSuffix}-api'
@@ -1299,7 +1314,12 @@ module avmContainerApp_API_update 'br/public:avm/res/app/container-app:0.19.0' =
     enableTelemetry: enableTelemetry
     environmentResourceId: avmContainerAppEnv.outputs.resourceId
     workloadProfileName: 'Consumption'
-    registries: null
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
     tags: tags
     managedIdentities: {
       systemAssigned: true
@@ -1311,7 +1331,7 @@ module avmContainerApp_API_update 'br/public:avm/res/app/container-app:0.19.0' =
     containers: [
       {
         name: 'ca-${solutionSuffix}-api'
-        image: '${publicContainerImageEndpoint}/${apiContainerImageName}:${containerImageTag}'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
         resources: {
           cpu: 4
           memory: '8.0Gi'
