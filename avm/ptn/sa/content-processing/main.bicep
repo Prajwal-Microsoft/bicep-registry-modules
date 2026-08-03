@@ -1021,6 +1021,78 @@ module avmContainerApp_Web 'br/public:avm/res/app/container-app:0.19.0' = {
   }
 }
 
+// ========== Container App Workflow ========== //
+module avmContainerApp_Workflow 'br/public:avm/res/app/container-app:0.22.1' = {
+  name: take('avm.res.app.container-app-wkfl.${solutionSuffix}', 64)
+  params: {
+    name: 'ca-${solutionSuffix}-wkfl'
+    location: location
+    environmentResourceId: avmContainerAppEnv.outputs.resourceId
+    workloadProfileName: 'Consumption'
+    enableTelemetry: enableTelemetry
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
+    tags: tags
+    managedIdentities: {
+      systemAssigned: true
+      userAssignedResourceIds: [
+        avmContainerRegistryReader.outputs.resourceId
+      ]
+    }
+    containers: [
+      {
+        name: 'ca-${solutionSuffix}-wkfl'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+        resources: {
+          cpu: 4
+          memory: '8.0Gi'
+        }
+        env: [
+          {
+            name: 'APP_CONFIG_ENDPOINT'
+            value: ''
+          }
+          {
+            name: 'APP_ENV'
+            value: 'prod'
+          }
+          {
+            name: 'APP_LOGGING_LEVEL'
+            value: 'INFO'
+          }
+          {
+            name: 'AZURE_PACKAGE_LOGGING_LEVEL'
+            value: 'WARNING'
+          }
+          {
+            name: 'AZURE_LOGGING_PACKAGES'
+            value: ''
+          }
+          {
+            name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+            value: enableMonitoring ? applicationInsights.outputs.connectionString : ''
+          }
+          {
+            name: 'OTEL_SERVICE_NAME'
+            value: 'ContentProcessorWorkflow'
+          }
+        ]
+      }
+    ]
+    activeRevisionsMode: 'Single'
+    ingressExternal: false
+    disableIngress: true
+    scaleSettings: {
+      maxReplicas: enableScalability ? 3 : 2
+      minReplicas: enableScalability ? 2 : 1
+    }
+  }
+}
+
 // ========== Cosmos Database for Mongo DB ========== //
 module avmCosmosDB 'br/public:avm/res/document-db/database-account:0.18.0' = {
   name: take('avm.res.document-db.database-account.${solutionSuffix}', 64)
@@ -1142,6 +1214,18 @@ module avmAppConfig 'br/public:avm/res/app-configuration/configuration-store:0.9
       {
         name: 'APP_COSMOS_CONTAINER_SCHEMA'
         value: 'Schemas'
+      }
+      {
+        name: 'APP_COSMOS_CONTAINER_SCHEMASET'
+        value: 'SchemaSets'
+      }
+      {
+        name: 'AZURE_PACKAGE_LOGGING_LEVEL'
+        value: 'WARNING'
+      }
+      {
+        name: 'AZURE_LOGGING_PACKAGES'
+        value: ''
       }
       {
         name: 'APP_COSMOS_DATABASE'
@@ -1426,13 +1510,17 @@ module avmContainerApp_API_update 'br/public:avm/res/app/container-app:0.22.1' =
 // Outputs      //
 // ============ //
 
-@description('The resource ID of the Container App Environment.')
+@description('The name of the Container App web application.')
 output containerWebAppName string = avmContainerApp_Web.outputs.name
-@description('The resource ID of the Container App API.')
+@description('The name of the Container App API application.')
 output containerApiAppName string = avmContainerApp_API.outputs.name
-@description('The resource ID of the Container App Environment.')
+@description('The FQDN of the Container App web application.')
 output containerWebAppFqdn string = avmContainerApp_Web.outputs.fqdn
-@description('The resource ID of the Container App API.')
+@description('The FQDN of the Container App API application.')
 output containerApiAppFqdn string = avmContainerApp_API.outputs.fqdn
+@description('The name of the Container App workflow application.')
+output containerWorkflowAppName string = avmContainerApp_Workflow.outputs.name
+@description('The FQDN of the Container App workflow application.')
+output containerWorkflowAppFqdn string = avmContainerApp_Workflow.outputs.fqdn
 @description('The resource group the resources were deployed into.')
 output resourceGroupName string = resourceGroup().name
