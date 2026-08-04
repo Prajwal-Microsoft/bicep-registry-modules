@@ -966,6 +966,7 @@ module avmContainerApp_Web 'br/public:avm/res/app/container-app:0.19.0' = {
       ]
     }
     ingressExternal: true
+    ingressTargetPort: 3000
     activeRevisionsMode: 'Single'
     ingressTransport: 'auto'
     scaleSettings: {
