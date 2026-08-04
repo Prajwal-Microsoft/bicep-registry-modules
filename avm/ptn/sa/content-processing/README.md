@@ -4,7 +4,7 @@ This module contains the resources required to deploy the [Content Processing so
 
 |**Post-Deployment Steps** |
 |-------------|
-| After deploying the AVM module, complete the environment setup in the following order: 1) build and push the container images to the ACR created for the deployment, 2) run the post-deployment helper with the deployed resource group and API base URL, and 3) complete the authentication and portal setup described in the [Post-Deployment Guide](https://github.com/microsoft/content-processing-solution-accelerator/blob/main/docs/AVMPostDeploymentGuide.md). |
+| After deploying the AVM module, complete the environment setup in the following order: 1) build and push the container images to the ACR created for the deployment, 2) run the post-deployment helper with the deployed resource group and API base URL, and 3) complete the authentication and portal setup described in the [Post-Deployment Guide](./POST-DEPLOYMENT.md). |
 
 ### AVM post-deployment sequence
 
@@ -22,7 +22,7 @@ This module contains the resources required to deploy the [Content Processing so
    .\infra\scripts\post_deployment.ps1 -ResourceGroupName "pgcp1" -ApiBaseUrl "https://<containerApiAppFqdn>"
    ```
 
-4. Complete any authentication or portal configuration steps from the post-deployment guide after the helper has finished.
+4. Complete any authentication or portal configuration steps from the [Post-Deployment Guide](./POST-DEPLOYMENT.md) after the helper has finished.
 
 > **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.
 
