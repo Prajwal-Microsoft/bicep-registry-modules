@@ -698,64 +698,10 @@ module avmAiServices 'modules/account/aifoundry.bicep' = {
   }
 }
 
-module avmAiServices_cu 'br/public:avm/res/cognitive-services/account:0.13.2' = {
-  name: take('avm.res.cognitive-services.account.content-understanding.${solutionSuffix}', 64)
-
-  params: {
-    name: 'aicu-${solutionSuffix}'
-    location: contentUnderstandingLocation
-    sku: 'S0'
-    managedIdentities: {
-      systemAssigned: false
-      userAssignedResourceIds: [
-        avmManagedIdentity.outputs.resourceId // Use the managed identity created above
-      ]
-    }
-    kind: 'AIServices'
-    tags: {
-      app: solutionSuffix
-      location: location
-    }
-    customSubDomainName: 'aicu-${solutionSuffix}'
-    disableLocalAuth: true
-    enableTelemetry: enableTelemetry
-    networkAcls: {
-      bypass: 'AzureServices'
-      defaultAction: 'Allow' // Always allow for AI Services
-    }
-    roleAssignments: [
-      {
-        principalId: avmContainerApp.outputs.systemAssignedMIPrincipalId!
-        roleDefinitionIdOrName: 'a97b65f3-24c7-4388-baec-2e87135dc908'
-        principalType: 'ServicePrincipal'
-      }
-    ]
-
-    publicNetworkAccess: (enablePrivateNetworking) ? 'Disabled' : 'Enabled'
-    privateEndpoints: (enablePrivateNetworking)
-      ? [
-          {
-            name: 'pep-aicu-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-aicu-${solutionSuffix}'
-            privateEndpointResourceId: virtualNetwork!.outputs.resourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                {
-                  name: 'aicu-dns-zone-cognitiveservices'
-                  privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.cognitiveServices]!.outputs.resourceId
-                }
-                {
-                  name: 'aicu-dns-zone-contentunderstanding'
-                  privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.contentUnderstanding]!.outputs.resourceId
-                }
-              ]
-            }
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId // Use the backend subnet
-          }
-        ]
-      : []
-  }
-}
+// NOTE: Content Understanding is served from the same avmAiServices ('aif-') AIServices-kind
+// account as Azure OpenAI (see APP_CONTENT_UNDERSTANDING_ENDPOINT below) - a separate
+// 'aicu-' account is not required and was removed here because it was not being created/
+// reachable reliably, causing PDF extraction to fail with a DNS resolution error.
 
 // ========== Container App Environment ========== //
 module avmContainerAppEnv 'br/public:avm/res/app/managed-environment:0.11.3' = {
@@ -1258,7 +1204,7 @@ module avmAppConfig 'br/public:avm/res/app-configuration/configuration-store:0.9
       }
       {
         name: 'APP_CONTENT_UNDERSTANDING_ENDPOINT'
-        value: avmAiServices_cu.outputs.endpoint //TODO: replace with actual endpoint
+        value: avmAiServices.outputs.endpoint // Content Understanding is served from the same AIServices account as Azure OpenAI
       }
       {
         name: 'APP_COSMOS_CONTAINER_PROCESS'
