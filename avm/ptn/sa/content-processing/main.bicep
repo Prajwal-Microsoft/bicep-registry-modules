@@ -1012,7 +1012,11 @@ module avmContainerApp_Web 'br/public:avm/res/app/container-app:0.19.0' = {
           }
           {
             name: 'APP_WEB_AUTHORITY'
-            value: '${environment().authentication.loginEndpoint}/${tenant().tenantId}'
+            // environment().authentication.loginEndpoint already ends with a trailing slash;
+            // appending another '/' here produced a malformed double-slash authority URL
+            // (e.g. https://login.microsoftonline.com//<tenantId>) which broke MSAL.js
+            // initialization in the web frontend, resulting in a blank page after sign-in.
+            value: '${environment().authentication.loginEndpoint}${tenant().tenantId}'
           }
           {
             name: 'APP_WEB_SCOPE'
