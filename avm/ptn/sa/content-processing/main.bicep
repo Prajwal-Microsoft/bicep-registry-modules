@@ -615,6 +615,31 @@ module avmAiServices 'modules/account/aifoundry.bicep' = {
         roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
         principalType: 'ServicePrincipal'
       }
+      {
+        principalId: avmContainerApp.outputs.systemAssignedMIPrincipalId!
+        roleDefinitionIdOrName: 'Azure AI Developer'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: avmContainerApp_Workflow.outputs.systemAssignedMIPrincipalId!
+        roleDefinitionIdOrName: 'Cognitive Services OpenAI User'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: avmContainerApp_Workflow.outputs.systemAssignedMIPrincipalId!
+        roleDefinitionIdOrName: 'Azure AI Developer'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: avmContainerApp.outputs.systemAssignedMIPrincipalId!
+        roleDefinitionIdOrName: 'Cognitive Services User'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: avmContainerApp_Workflow.outputs.systemAssignedMIPrincipalId!
+        roleDefinitionIdOrName: 'Cognitive Services User'
+        principalType: 'ServicePrincipal'
+      }
     ]
     networkAcls: {
       bypass: 'AzureServices'

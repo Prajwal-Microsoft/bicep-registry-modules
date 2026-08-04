@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "8810022716258366533"
+      "templateHash": "17143771636179096852"
     },
     "name": "Content Processing Solution Accelerator",
     "description": "This module contains the resources required to deploy the [Content Processing solution accelerator](https://github.com/microsoft/content-processing-solution-accelerator) for both Sandbox environments and WAF aligned environments.\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, follow the steps in the [Post-Deployment Guide](https://github.com/microsoft/content-processing-solution-accelerator/blob/main/docs/AVMPostDeploymentGuide.md) to configure and verify your environment. |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
@@ -34052,8 +34052,8 @@
         "avmContainerApp_API",
         "avmContainerApp_Workflow",
         "avmManagedIdentity",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
         "virtualNetwork"
       ]
     },
@@ -34108,6 +34108,31 @@
               {
                 "principalId": "[reference('avmContainerApp').outputs.systemAssignedMIPrincipalId.value]",
                 "roleDefinitionIdOrName": "Cognitive Services OpenAI User",
+                "principalType": "ServicePrincipal"
+              },
+              {
+                "principalId": "[reference('avmContainerApp').outputs.systemAssignedMIPrincipalId.value]",
+                "roleDefinitionIdOrName": "Azure AI Developer",
+                "principalType": "ServicePrincipal"
+              },
+              {
+                "principalId": "[reference('avmContainerApp_Workflow').outputs.systemAssignedMIPrincipalId.value]",
+                "roleDefinitionIdOrName": "Cognitive Services OpenAI User",
+                "principalType": "ServicePrincipal"
+              },
+              {
+                "principalId": "[reference('avmContainerApp_Workflow').outputs.systemAssignedMIPrincipalId.value]",
+                "roleDefinitionIdOrName": "Azure AI Developer",
+                "principalType": "ServicePrincipal"
+              },
+              {
+                "principalId": "[reference('avmContainerApp').outputs.systemAssignedMIPrincipalId.value]",
+                "roleDefinitionIdOrName": "Cognitive Services User",
+                "principalType": "ServicePrincipal"
+              },
+              {
+                "principalId": "[reference('avmContainerApp_Workflow').outputs.systemAssignedMIPrincipalId.value]",
+                "roleDefinitionIdOrName": "Cognitive Services User",
                 "principalType": "ServicePrincipal"
               }
             ]
@@ -37469,10 +37494,11 @@
       },
       "dependsOn": [
         "avmContainerApp",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').contentUnderstanding)]",
+        "avmContainerApp_Workflow",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').contentUnderstanding)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "logAnalyticsWorkspace",
         "virtualNetwork"
       ]
