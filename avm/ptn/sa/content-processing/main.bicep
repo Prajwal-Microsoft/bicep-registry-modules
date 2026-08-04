@@ -533,6 +533,16 @@ module avmStorageAccount 'br/public:avm/res/storage/storage-account:0.28.0' = {
         principalId: avmContainerApp_API.outputs.systemAssignedMIPrincipalId!
         principalType: 'ServicePrincipal'
       }
+      {
+        roleDefinitionIdOrName: 'Storage Blob Data Contributor'
+        principalId: avmContainerApp_Workflow.outputs.systemAssignedMIPrincipalId!
+        principalType: 'ServicePrincipal'
+      }
+      {
+        roleDefinitionIdOrName: 'Storage Queue Data Contributor'
+        principalId: avmContainerApp_Workflow.outputs.systemAssignedMIPrincipalId!
+        principalType: 'ServicePrincipal'
+      }
     ]
     networkAcls: {
       bypass: 'AzureServices'
@@ -1194,6 +1204,11 @@ module avmAppConfig 'br/public:avm/res/app-configuration/configuration-store:0.9
         roleDefinitionIdOrName: 'App Configuration Data Reader'
         principalType: 'ServicePrincipal'
       }
+      {
+        principalId: avmContainerApp_Workflow.outputs.?systemAssignedMIPrincipalId!
+        roleDefinitionIdOrName: 'App Configuration Data Reader'
+        principalType: 'ServicePrincipal'
+      }
     ]
     keyValues: [
       {
@@ -1287,6 +1302,98 @@ module avmAppConfig 'br/public:avm/res/app-configuration/configuration-store:0.9
       {
         name: 'APP_COSMOS_CONNSTR'
         value: avmCosmosDB.outputs.primaryReadWriteConnectionString
+      }
+      // ===== v2 Workflow Keys ===== //
+      {
+        name: 'APP_COSMOS_CONTAINER_BATCH_PROCESS'
+        value: 'claimprocesses'
+      }
+      {
+        name: 'APP_COSMOS_CONTAINER_BATCHES'
+        value: 'batches'
+      }
+      {
+        name: 'APP_CPS_PROCESS_BATCH'
+        value: 'process-batch'
+      }
+      {
+        name: 'APP_CPS_CONTENT_PROCESS_ENDPOINT'
+        value: 'http://${avmContainerApp_API.outputs.name}/'
+      }
+      {
+        name: 'APP_CPS_POLL_INTERVAL_SECONDS'
+        value: '3'
+      }
+      {
+        name: 'APP_STORAGE_ACCOUNT_NAME'
+        value: avmStorageAccount.outputs.name
+      }
+      {
+        name: 'CLAIM_PROCESS_QUEUE_NAME'
+        value: 'claim-process-queue'
+      }
+      {
+        name: 'DEAD_LETTER_QUEUE_NAME'
+        value: 'claim-process-dead-letter-queue'
+      }
+      {
+        name: 'AZURE_OPENAI_ENDPOINT'
+        value: avmAiServices.outputs.endpoint
+      }
+      {
+        name: 'AZURE_OPENAI_CHAT_DEPLOYMENT_NAME'
+        value: gptModelName
+      }
+      {
+        name: 'AZURE_OPENAI_API_VERSION'
+        value: '2025-03-01-preview'
+      }
+      {
+        name: 'AZURE_OPENAI_ENDPOINT_BASE'
+        value: avmAiServices.outputs.endpoint
+      }
+      // ===== Agent Framework Keys ===== //
+      {
+        name: 'AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME'
+        value: ''
+      }
+      {
+        name: 'AZURE_AI_AGENT_PROJECT_CONNECTION_STRING'
+        value: ''
+      }
+      {
+        name: 'AZURE_TRACING_ENABLED'
+        value: 'True'
+      }
+      {
+        name: 'GLOBAL_LLM_SERVICE'
+        value: 'AzureOpenAI'
+      }
+      // ===== GPT-5 Service Prefix Keys ===== //
+      {
+        name: 'GPT5_API_VERSION'
+        value: '2025-03-01-preview'
+      }
+      {
+        name: 'GPT5_CHAT_DEPLOYMENT_NAME'
+        value: 'gpt-5'
+      }
+      {
+        name: 'GPT5_ENDPOINT'
+        value: avmAiServices.outputs.endpoint
+      }
+      // ===== PHI-4 Service Prefix Keys ===== //
+      {
+        name: 'PHI4_API_VERSION'
+        value: '2024-05-01-preview'
+      }
+      {
+        name: 'PHI4_CHAT_DEPLOYMENT_NAME'
+        value: 'phi-4'
+      }
+      {
+        name: 'PHI4_ENDPOINT'
+        value: avmAiServices.outputs.endpoint
       }
     ]
 
@@ -1503,6 +1610,84 @@ module avmContainerApp_API_update 'br/public:avm/res/app/container-app:0.22.1' =
         'Content-Type'
         '*'
       ]
+    }
+  }
+}
+
+// ========== Container App Workflow (update) ========== //
+// NOTE: this module is required to patch the Workflow container app with its
+// real APP_CONFIG_ENDPOINT (and other settings) once App Configuration exists.
+// Without it, the workflow container is stuck with an empty APP_CONFIG_ENDPOINT
+// from its bootstrap deployment and crash-loops with:
+//   AttributeError: 'NoneType' object has no attribute 'endpoint'
+// because it cannot resolve AZURE_OPENAI settings from App Configuration.
+module avmContainerApp_Workflow_update 'br/public:avm/res/app/container-app:0.22.1' = {
+  name: take('avm.res.app.container-app-wkfl.update.${solutionSuffix}', 64)
+  params: {
+    name: 'ca-${solutionSuffix}-wkfl'
+    location: location
+    enableTelemetry: enableTelemetry
+    environmentResourceId: avmContainerAppEnv.outputs.resourceId
+    workloadProfileName: 'Consumption'
+    registries: [
+      {
+        server: avmContainerRegistry.outputs.loginServer
+        identity: avmContainerRegistryReader.outputs.resourceId
+      }
+    ]
+    tags: tags
+    managedIdentities: {
+      systemAssigned: true
+      userAssignedResourceIds: [
+        avmContainerRegistryReader.outputs.resourceId
+      ]
+    }
+    containers: [
+      {
+        name: 'ca-${solutionSuffix}-wkfl'
+        image: 'mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
+        resources: {
+          cpu: 4
+          memory: '8.0Gi'
+        }
+        env: [
+          {
+            name: 'APP_CONFIG_ENDPOINT'
+            value: avmAppConfig.outputs.endpoint
+          }
+          {
+            name: 'APP_ENV'
+            value: 'prod'
+          }
+          {
+            name: 'APP_LOGGING_LEVEL'
+            value: 'INFO'
+          }
+          {
+            name: 'AZURE_PACKAGE_LOGGING_LEVEL'
+            value: 'WARNING'
+          }
+          {
+            name: 'AZURE_LOGGING_PACKAGES'
+            value: ''
+          }
+          {
+            name: 'APPLICATIONINSIGHTS_CONNECTION_STRING'
+            value: enableMonitoring ? applicationInsights.outputs.connectionString : ''
+          }
+          {
+            name: 'OTEL_SERVICE_NAME'
+            value: 'ContentProcessorWorkflow'
+          }
+        ]
+      }
+    ]
+    activeRevisionsMode: 'Single'
+    ingressExternal: false
+    disableIngress: true
+    scaleSettings: {
+      maxReplicas: enableScalability ? 3 : 2
+      minReplicas: enableScalability ? 2 : 1
     }
   }
 }
