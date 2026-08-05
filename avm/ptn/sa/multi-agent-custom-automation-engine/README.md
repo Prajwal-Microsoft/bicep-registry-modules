@@ -47,6 +47,14 @@ For examples, please refer to the [Usage Examples](#usage-examples) section.
 | `Microsoft.Compute/proximityPlacementGroups` | 2022-08-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.compute_proximityplacementgroups.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Compute/2022-08-01/proximityPlacementGroups)</li></ul> |
 | `Microsoft.Compute/virtualMachines` | 2024-07-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.compute_virtualmachines.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Compute/2024-07-01/virtualMachines)</li></ul> |
 | `Microsoft.Compute/virtualMachines/extensions` | 2024-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.compute_virtualmachines_extensions.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Compute/2024-11-01/virtualMachines/extensions)</li></ul> |
+| `Microsoft.ContainerRegistry/registries` | 2025-06-01-preview | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-06-01-preview/registries)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/cacheRules` | 2025-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_cacherules.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-11-01/registries/cacheRules)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/credentialSets` | 2025-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_credentialsets.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-11-01/registries/credentialSets)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/replications` | 2025-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_replications.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-11-01/registries/replications)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/scopeMaps` | 2025-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_scopemaps.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-11-01/registries/scopeMaps)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/tasks` | 2025-03-01-preview | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_tasks.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-03-01-preview/registries/tasks)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/tokens` | 2025-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_tokens.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-11-01/registries/tokens)</li></ul> |
+| `Microsoft.ContainerRegistry/registries/webhooks` | 2025-11-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.containerregistry_registries_webhooks.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.ContainerRegistry/2025-11-01/registries/webhooks)</li></ul> |
 | `Microsoft.DevTestLab/schedules` | 2018-09-15 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.devtestlab_schedules.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.DevTestLab/2018-09-15/schedules)</li></ul> |
 | `Microsoft.DocumentDB/databaseAccounts` | 2025-04-15 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.documentdb_databaseaccounts.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.DocumentDB/2025-04-15/databaseAccounts)</li></ul> |
 | `Microsoft.DocumentDB/databaseAccounts/cassandraKeyspaces` | 2024-11-15 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.documentdb_databaseaccounts_cassandrakeyspaces.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.DocumentDB/2024-11-15/databaseAccounts/cassandraKeyspaces)</li></ul> |
@@ -88,10 +96,10 @@ For examples, please refer to the [Usage Examples](#usage-examples) section.
 | `Microsoft.Network/privateDnsZones/SRV` | 2020-06-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privatednszones_srv.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2020-06-01/privateDnsZones/SRV)</li></ul> |
 | `Microsoft.Network/privateDnsZones/TXT` | 2020-06-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privatednszones_txt.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2020-06-01/privateDnsZones/TXT)</li></ul> |
 | `Microsoft.Network/privateDnsZones/virtualNetworkLinks` | 2024-06-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privatednszones_virtualnetworklinks.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2024-06-01/privateDnsZones/virtualNetworkLinks)</li></ul> |
-| `Microsoft.Network/privateEndpoints` | 2025-05-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privateendpoints.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2025-05-01/privateEndpoints)</li></ul> |
 | `Microsoft.Network/privateEndpoints` | 2024-10-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privateendpoints.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2024-10-01/privateEndpoints)</li></ul> |
-| `Microsoft.Network/privateEndpoints/privateDnsZoneGroups` | 2024-10-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privateendpoints_privatednszonegroups.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2024-10-01/privateEndpoints/privateDnsZoneGroups)</li></ul> |
+| `Microsoft.Network/privateEndpoints` | 2025-05-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privateendpoints.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2025-05-01/privateEndpoints)</li></ul> |
 | `Microsoft.Network/privateEndpoints/privateDnsZoneGroups` | 2025-05-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privateendpoints_privatednszonegroups.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2025-05-01/privateEndpoints/privateDnsZoneGroups)</li></ul> |
+| `Microsoft.Network/privateEndpoints/privateDnsZoneGroups` | 2024-10-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_privateendpoints_privatednszonegroups.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2024-10-01/privateEndpoints/privateDnsZoneGroups)</li></ul> |
 | `Microsoft.Network/publicIPAddresses` | 2025-01-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_publicipaddresses.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2025-01-01/publicIPAddresses)</li></ul> |
 | `Microsoft.Network/virtualNetworks` | 2024-05-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_virtualnetworks.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2024-05-01/virtualNetworks)</li></ul> |
 | `Microsoft.Network/virtualNetworks/subnets` | 2024-05-01 | <ul style="padding-left: 0px;"><li>[AzAdvertizer](https://www.azadvertizer.net/azresourcetypes/microsoft.network_virtualnetworks_subnets.html)</li><li>[Template reference](https://learn.microsoft.com/en-us/azure/templates/Microsoft.Network/2024-05-01/virtualNetworks/subnets)</li></ul> |
@@ -329,7 +337,7 @@ param virtualMachineAdminUsername = 'adminuser'
 | [`azureopenaiVersion`](#parameter-azureopenaiversion) | string | Version of the Azure OpenAI service to deploy. Defaults to 2024-12-01-preview. |
 | [`backendContainerImageName`](#parameter-backendcontainerimagename) | string | The Container Image Name to deploy on the backend. |
 | [`backendContainerImageTag`](#parameter-backendcontainerimagetag) | string | The Container Image Tag to deploy on the backend. |
-| [`backendContainerRegistryHostname`](#parameter-backendcontainerregistryhostname) | string | The Container Registry hostname where the docker images for the backend are located. |
+| [`backendContainerRegistryHostname`](#parameter-backendcontainerregistryhostname) | string | The Container Registry hostname where the docker images for the backend are located. Defaults to mcr.microsoft.com placeholder; override with your ACR login server after running the build-and-push scripts. |
 | [`cosmosDbReplicaLocation`](#parameter-cosmosdbreplicalocation) | string | Location for the Cosmos DB replica deployment. This location is used when enableRedundancy is set to true. |
 | [`createdBy`](#parameter-createdby) | string | Tag, Created by user name. |
 | [`enableMonitoring`](#parameter-enablemonitoring) | bool | Enable monitoring applicable resources, aligned with the Well Architected Framework recommendations. This setting enables Application Insights and Log Analytics and configures all the resources applicable resources to send logs. Defaults to false. |
@@ -339,23 +347,23 @@ param virtualMachineAdminUsername = 'adminuser'
 | [`enableTelemetry`](#parameter-enabletelemetry) | bool | Enable/Disable usage telemetry for module. |
 | [`frontendContainerImageName`](#parameter-frontendcontainerimagename) | string | The Container Image Name to deploy on the frontend. |
 | [`frontendContainerImageTag`](#parameter-frontendcontainerimagetag) | string | The Container Image Tag to deploy on the frontend. |
-| [`frontendContainerRegistryHostname`](#parameter-frontendcontainerregistryhostname) | string | The Container Registry hostname where the docker images for the frontend are located. |
-| [`gpt41ModelCapacity`](#parameter-gpt41modelcapacity) | int | AI model deployment token capacity. Defaults to 150 for optimal performance. |
-| [`gpt41ModelDeploymentType`](#parameter-gpt41modeldeploymenttype) | string | GPT model deployment type. Defaults to GlobalStandard. |
-| [`gpt41ModelName`](#parameter-gpt41modelname) | string | Name of the GPT model to deploy. |
-| [`gpt41ModelVersion`](#parameter-gpt41modelversion) | string | Version of the GPT model to deploy. Defaults to 2025-04-14. |
-| [`gptModelCapacity`](#parameter-gptmodelcapacity) | int | AI model deployment token capacity. Defaults to 50 for optimal performance. |
+| [`frontendContainerRegistryHostname`](#parameter-frontendcontainerregistryhostname) | string | The Container Registry hostname where the docker images for the frontend are located. Defaults to mcr.microsoft.com placeholder; override with your ACR login server after running the build-and-push scripts. |
+| [`gpt5_4ModelCapacity`](#parameter-gpt5_4modelcapacity) | int | AI model deployment token capacity for the larger GPT model. Defaults to 150 for optimal performance. |
+| [`gpt5_4ModelDeploymentType`](#parameter-gpt5_4modeldeploymenttype) | string | Deployment type for the larger GPT model. Defaults to GlobalStandard. |
+| [`gpt5_4ModelName`](#parameter-gpt5_4modelname) | string | Name of the underlying larger GPT model to deploy. Defaults to gpt-5.4 (2026-03-05 series). |
+| [`gpt5_4ModelVersion`](#parameter-gpt5_4modelversion) | string | Version of the larger GPT model to deploy. Defaults to 2026-03-05 (gpt-5.4 release). |
+| [`gptImageModelCapacity`](#parameter-gptimagemodelcapacity) | int | gpt-image-1.5 deployment capacity (RPM). Defaults to 5 to support concurrent marketing-image generation across multiple sessions. |
+| [`gptImageModelDeploymentType`](#parameter-gptimagemodeldeploymenttype) | string | GPT image model deployment type. Defaults to GlobalStandard. |
+| [`gptImageModelName`](#parameter-gptimagemodelname) | string | Name of the image-generation model to deploy. Defaults to gpt-image-1.5. |
+| [`gptImageModelVersion`](#parameter-gptimagemodelversion) | string | Version of the image-generation model to deploy. Defaults to 2025-12-16. |
+| [`gptModelCapacity`](#parameter-gptmodelcapacity) | int | AI model deployment token capacity. Defaults to 100 for optimal performance. |
 | [`gptModelDeploymentType`](#parameter-gptmodeldeploymenttype) | string | GPT model deployment type. Defaults to GlobalStandard. |
-| [`gptModelName`](#parameter-gptmodelname) | string | Name of the GPT model to deploy. |
-| [`gptModelVersion`](#parameter-gptmodelversion) | string | Version of the GPT model to deploy. Defaults to 2025-04-14. |
-| [`gptReasoningModelCapacity`](#parameter-gptreasoningmodelcapacity) | int | AI model deployment token capacity. Defaults to 50 for optimal performance. |
-| [`gptReasoningModelDeploymentType`](#parameter-gptreasoningmodeldeploymenttype) | string | GPT model deployment type. Defaults to GlobalStandard. |
-| [`gptReasoningModelName`](#parameter-gptreasoningmodelname) | string | Name of the GPT Reasoning model to deploy. |
-| [`gptReasoningModelVersion`](#parameter-gptreasoningmodelversion) | string | Version of the GPT Reasoning model to deploy. Defaults to 2025-04-16. |
+| [`gptModelName`](#parameter-gptmodelname) | string | Name of the underlying GPT model to deploy. Defaults to gpt-5.4-mini (2026-03-17 series). |
+| [`gptModelVersion`](#parameter-gptmodelversion) | string | Version of the GPT model to deploy. Defaults to 2026-03-17 (gpt-5.4-mini release). |
 | [`location`](#parameter-location) | string | Azure region for all services. Regions are restricted to guarantee compatibility with paired regions and replica locations for data redundancy and failover scenarios based on articles [Azure regions list](https://learn.microsoft.com/azure/reliability/regions-list) and [Azure Database for MySQL Flexible Server - Azure Regions](https://learn.microsoft.com/azure/mysql/flexible-server/overview#azure-regions). |
 | [`mcpContainerImageName`](#parameter-mcpcontainerimagename) | string | The Container Image Name to deploy on the MCP. |
 | [`mcpContainerImageTag`](#parameter-mcpcontainerimagetag) | string | The Container Image Tag to deploy on the MCP. |
-| [`mcpContainerRegistryHostname`](#parameter-mcpcontainerregistryhostname) | string | The Container Registry hostname where the docker images for the MCP are located. |
+| [`mcpContainerRegistryHostname`](#parameter-mcpcontainerregistryhostname) | string | The Container Registry hostname where the docker images for the MCP are located. Defaults to mcr.microsoft.com placeholder; override with your ACR login server after running the build-and-push scripts. |
 | [`solutionName`](#parameter-solutionname) | string | A unique application/solution name for all resources in this deployment. This should be 3-16 characters long. |
 | [`solutionUniqueText`](#parameter-solutionuniquetext) | string | A unique text value for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name. |
 | [`tags`](#parameter-tags) | object | The tags to apply to all deployed Azure resources. |
@@ -376,9 +384,11 @@ Location for all AI service resources. This should be one of the supported Azure
     'francecentral'
     'japaneast'
     'norwayeast'
-    'swedencentral'
+    'polandcentral'
+    'uaenorth'
     'uksouth'
     'westus'
+    'westus3'
   ]
   ```
 
@@ -404,7 +414,7 @@ The Container Image Name to deploy on the backend.
 
 - Required: No
 - Type: string
-- Default: `'macaebackend'`
+- Default: `'azuredocs/containerapps-helloworld'`
 
 ### Parameter: `backendContainerImageTag`
 
@@ -412,15 +422,15 @@ The Container Image Tag to deploy on the backend.
 
 - Required: No
 - Type: string
-- Default: `'latest_v4_2026-04-27_2050'`
+- Default: `'latest'`
 
 ### Parameter: `backendContainerRegistryHostname`
 
-The Container Registry hostname where the docker images for the backend are located.
+The Container Registry hostname where the docker images for the backend are located. Defaults to mcr.microsoft.com placeholder; override with your ACR login server after running the build-and-push scripts.
 
 - Required: No
 - Type: string
-- Default: `'biabcontainerreg.azurecr.io'`
+- Default: `'mcr.microsoft.com'`
 
 ### Parameter: `cosmosDbReplicaLocation`
 
@@ -484,7 +494,7 @@ The Container Image Name to deploy on the frontend.
 
 - Required: No
 - Type: string
-- Default: `'macaefrontend'`
+- Default: `'azuredocs/containerapps-helloworld'`
 
 ### Parameter: `frontendContainerImageTag`
 
@@ -492,27 +502,27 @@ The Container Image Tag to deploy on the frontend.
 
 - Required: No
 - Type: string
-- Default: `'latest_v4_2026-04-27_2050'`
+- Default: `'latest'`
 
 ### Parameter: `frontendContainerRegistryHostname`
 
-The Container Registry hostname where the docker images for the frontend are located.
+The Container Registry hostname where the docker images for the frontend are located. Defaults to mcr.microsoft.com placeholder; override with your ACR login server after running the build-and-push scripts.
 
 - Required: No
 - Type: string
-- Default: `'biabcontainerreg.azurecr.io'`
+- Default: `'mcr.microsoft.com'`
 
-### Parameter: `gpt41ModelCapacity`
+### Parameter: `gpt5_4ModelCapacity`
 
-AI model deployment token capacity. Defaults to 150 for optimal performance.
+AI model deployment token capacity for the larger GPT model. Defaults to 150 for optimal performance.
 
 - Required: No
 - Type: int
 - Default: `150`
 
-### Parameter: `gpt41ModelDeploymentType`
+### Parameter: `gpt5_4ModelDeploymentType`
 
-GPT model deployment type. Defaults to GlobalStandard.
+Deployment type for the larger GPT model. Defaults to GlobalStandard.
 
 - Required: No
 - Type: string
@@ -525,29 +535,68 @@ GPT model deployment type. Defaults to GlobalStandard.
   ]
   ```
 
-### Parameter: `gpt41ModelName`
+### Parameter: `gpt5_4ModelName`
 
-Name of the GPT model to deploy.
-
-- Required: No
-- Type: string
-- Default: `'gpt-4.1'`
-
-### Parameter: `gpt41ModelVersion`
-
-Version of the GPT model to deploy. Defaults to 2025-04-14.
+Name of the underlying larger GPT model to deploy. Defaults to gpt-5.4 (2026-03-05 series).
 
 - Required: No
 - Type: string
-- Default: `'2025-04-14'`
+- Default: `'gpt-5.4'`
 
-### Parameter: `gptModelCapacity`
+### Parameter: `gpt5_4ModelVersion`
 
-AI model deployment token capacity. Defaults to 50 for optimal performance.
+Version of the larger GPT model to deploy. Defaults to 2026-03-05 (gpt-5.4 release).
+
+- Required: No
+- Type: string
+- Default: `'2026-03-05'`
+
+### Parameter: `gptImageModelCapacity`
+
+gpt-image-1.5 deployment capacity (RPM). Defaults to 5 to support concurrent marketing-image generation across multiple sessions.
 
 - Required: No
 - Type: int
-- Default: `50`
+- Default: `5`
+
+### Parameter: `gptImageModelDeploymentType`
+
+GPT image model deployment type. Defaults to GlobalStandard.
+
+- Required: No
+- Type: string
+- Default: `'GlobalStandard'`
+- Allowed:
+  ```Bicep
+  [
+    'GlobalStandard'
+    'Standard'
+  ]
+  ```
+
+### Parameter: `gptImageModelName`
+
+Name of the image-generation model to deploy. Defaults to gpt-image-1.5.
+
+- Required: No
+- Type: string
+- Default: `'gpt-image-1.5'`
+
+### Parameter: `gptImageModelVersion`
+
+Version of the image-generation model to deploy. Defaults to 2025-12-16.
+
+- Required: No
+- Type: string
+- Default: `'2025-12-16'`
+
+### Parameter: `gptModelCapacity`
+
+AI model deployment token capacity. Defaults to 100 for optimal performance.
+
+- Required: No
+- Type: int
+- Default: `100`
 
 ### Parameter: `gptModelDeploymentType`
 
@@ -566,58 +615,19 @@ GPT model deployment type. Defaults to GlobalStandard.
 
 ### Parameter: `gptModelName`
 
-Name of the GPT model to deploy.
+Name of the underlying GPT model to deploy. Defaults to gpt-5.4-mini (2026-03-17 series).
 
 - Required: No
 - Type: string
-- Default: `'gpt-4.1-mini'`
+- Default: `'gpt-5.4-mini'`
 
 ### Parameter: `gptModelVersion`
 
-Version of the GPT model to deploy. Defaults to 2025-04-14.
+Version of the GPT model to deploy. Defaults to 2026-03-17 (gpt-5.4-mini release).
 
 - Required: No
 - Type: string
-- Default: `'2025-04-14'`
-
-### Parameter: `gptReasoningModelCapacity`
-
-AI model deployment token capacity. Defaults to 50 for optimal performance.
-
-- Required: No
-- Type: int
-- Default: `50`
-
-### Parameter: `gptReasoningModelDeploymentType`
-
-GPT model deployment type. Defaults to GlobalStandard.
-
-- Required: No
-- Type: string
-- Default: `'GlobalStandard'`
-- Allowed:
-  ```Bicep
-  [
-    'GlobalStandard'
-    'Standard'
-  ]
-  ```
-
-### Parameter: `gptReasoningModelName`
-
-Name of the GPT Reasoning model to deploy.
-
-- Required: No
-- Type: string
-- Default: `'o4-mini'`
-
-### Parameter: `gptReasoningModelVersion`
-
-Version of the GPT Reasoning model to deploy. Defaults to 2025-04-16.
-
-- Required: No
-- Type: string
-- Default: `'2025-04-16'`
+- Default: `'2026-03-17'`
 
 ### Parameter: `location`
 
@@ -633,7 +643,7 @@ The Container Image Name to deploy on the MCP.
 
 - Required: No
 - Type: string
-- Default: `'macaemcp'`
+- Default: `'azuredocs/containerapps-helloworld'`
 
 ### Parameter: `mcpContainerImageTag`
 
@@ -641,15 +651,15 @@ The Container Image Tag to deploy on the MCP.
 
 - Required: No
 - Type: string
-- Default: `'latest_v4_2026-04-27_2050'`
+- Default: `'latest'`
 
 ### Parameter: `mcpContainerRegistryHostname`
 
-The Container Registry hostname where the docker images for the MCP are located.
+The Container Registry hostname where the docker images for the MCP are located. Defaults to mcr.microsoft.com placeholder; override with your ACR login server after running the build-and-push scripts.
 
 - Required: No
 - Type: string
-- Default: `'biabcontainerreg.azurecr.io'`
+- Default: `'mcr.microsoft.com'`
 
 ### Parameter: `solutionName`
 
@@ -703,7 +713,6 @@ The user name for the administrator account of the virtual machine. Allows to cu
 | `azureAiProjectEndpoint` | string | The Azure AI project endpoint URL. |
 | `azureAiProjectName` | string | The name of the Azure AI project. |
 | `azureAiResourceGroup` | string | The Azure resource group name. |
-| `azureAiSearchApiKey` | string | The Azure AI Search API key. |
 | `azureAiSearchConnectionName` | string | The name of the Azure AI Search connection. |
 | `azureAiSearchEndpoint` | string | The Azure AI Search service endpoint URL. |
 | `azureAiSearchIndexNameContractCompliance` | string | The name of the Azure AI Search index for contract compliance data. |
@@ -718,6 +727,8 @@ The user name for the administrator account of the virtual machine. Allows to cu
 | `azureAiSubscriptionId` | string | The Azure subscription ID. |
 | `azureClientId` | string | The Azure client ID for the user-assigned managed identity. |
 | `azureCognitiveServices` | string | The Azure Cognitive Services scope URL. |
+| `azureContainerRegistryEndpoint` | string | The login server (endpoint) of the deployed Azure Container Registry. |
+| `azureContainerRegistryName` | string | The name of the deployed Azure Container Registry. |
 | `azureOpenAiApiVersion` | string | The Azure OpenAI API version. |
 | `azureOpenAiDeploymentName` | string | The name of the Azure OpenAI deployment. |
 | `azureOpenAiEndpoint` | string | The Azure OpenAI service endpoint URL. |
@@ -734,14 +745,21 @@ The user name for the administrator account of the virtual machine. Allows to cu
 | `azureStorageContainerNameRfpRisk` | string | The name of the Azure Storage container for RFP risk data. |
 | `azureStorageContainerNameRfpSummary` | string | The name of the Azure Storage container for RFP summary data. |
 | `azureTenantId` | string | The Azure tenant ID. |
+| `backendContainerAppName` | string | Name of the backend Container App. |
+| `backendImageName` | string | Backend container image repository name. |
 | `backendUrl` | string | The backend URL for the container app. |
 | `cosmosDbAccountName` | string | The name of the Cosmos DB account. |
 | `cosmosDbContainer` | string | The name of the Cosmos DB container. |
 | `cosmosDbDatabase` | string | The name of the Cosmos DB database. |
 | `cosmosDbEndpoint` | string | The Cosmos DB endpoint URL. |
+| `frontendImageName` | string | Frontend container image repository name. |
+| `frontendWebAppName` | string | Name of the frontend Web App. |
+| `frontendWebsitesPort` | string | Port the frontend Web App container listens on. |
+| `mcpContainerAppName` | string | Name of the MCP Container App. |
+| `mcpImageName` | string | MCP container image repository name. |
 | `mcpServerDescription` | string | The description of the MCP server. |
 | `mcpServerName` | string | The name of the MCP server. |
-| `reasoningModelName` | string | The name of the reasoning model. |
+| `reasoningModelName` | string | The name of the orchestrator/reasoning model deployment. |
 | `resourceGroupName` | string | The resource group the resources were deployed into. |
 | `supportedModels` | string | The list of supported models. |
 | `webSiteDefaultHostname` | string | The default url of the website to connect to the Multi-Agent Custom Automation Engine solution. |
@@ -757,6 +775,7 @@ This section gives you an overview of all local-referenced module files (i.e., o
 | `br/public:avm/res/app/managed-environment:0.13.2` | Remote reference |
 | `br/public:avm/res/compute/proximity-placement-group:0.4.1` | Remote reference |
 | `br/public:avm/res/compute/virtual-machine:0.22.0` | Remote reference |
+| `br/public:avm/res/container-registry/registry:0.12.1` | Remote reference |
 | `br/public:avm/res/document-db/database-account:0.19.0` | Remote reference |
 | `br/public:avm/res/insights/component:0.7.1` | Remote reference |
 | `br/public:avm/res/insights/data-collection-rule:0.11.0` | Remote reference |
