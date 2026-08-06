@@ -4,7 +4,7 @@ This module deploys the [Conversation Knowledge Mining Solution Accelerator](htt
 
 |**Post-Deployment Step** |
 |-------------|
-| After completing the deployment, follow the steps in the [Post-Deployment Guide](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/documents/AVMPostDeploymentGuide.md) to configure and verify your environment. |
+| After completing the deployment, follow [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) to run image build/push and data setup scripts. |
 
 > **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.
 
@@ -141,199 +141,6 @@ The following section provides usage examples for the module, which were used to
 >**Note**: Each example lists all the required parameters first, followed by the rest - each in alphabetical order.
 
 >**Note**: To reference the module, please use the following syntax `br/public:avm/ptn/sa/conversation-knowledge-mining:<version>`.
-
-- [Sandbox configuration with default parameter values](#example-1-sandbox-configuration-with-default-parameter-values)
-- [WAF-aligned configuration with default parameter values](#example-2-waf-aligned-configuration-with-default-parameter-values)
-
-### Example 1: _Sandbox configuration with default parameter values_
-
-This instance deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) using only the required parameters. Optional parameters will take the default values, which are designed for Sandbox environments.
-
-You can find the full example and the setup of its dependencies in the deployment test folder path [/tests/e2e/sandbox]
-
-
-<details>
-
-<summary>via Bicep module</summary>
-
-```bicep
-module conversationKnowledgeMining 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>' = {
-  params: {
-    // Required parameters
-    aiServiceLocation: '<aiServiceLocation>'
-    usecase: 'telecom'
-    // Non-required parameters
-    location: '<location>'
-    solutionName: '<solutionName>'
-  }
-}
-```
-
-</details>
-<p>
-
-<details>
-
-<summary>via JSON parameters file</summary>
-
-```json
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    // Required parameters
-    "aiServiceLocation": {
-      "value": "<aiServiceLocation>"
-    },
-    "usecase": {
-      "value": "telecom"
-    },
-    // Non-required parameters
-    "location": {
-      "value": "<location>"
-    },
-    "solutionName": {
-      "value": "<solutionName>"
-    }
-  }
-}
-```
-
-</details>
-<p>
-
-<details>
-
-<summary>via Bicep parameters file</summary>
-
-```bicep-params
-using 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>'
-
-// Required parameters
-param aiServiceLocation = '<aiServiceLocation>'
-param usecase = 'telecom'
-// Non-required parameters
-param location = '<location>'
-param solutionName = '<solutionName>'
-```
-
-</details>
-<p>
-
-### Example 2: _WAF-aligned configuration with default parameter values_
-
-This instance deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) using only the required parameters. Optional parameters will take the default values, which are designed for WAF-aligned environments.
-
-You can find the full example and the setup of its dependencies in the deployment test folder path [/tests/e2e/waf-aligned]
-
-
-<details>
-
-<summary>via Bicep module</summary>
-
-```bicep
-module conversationKnowledgeMining 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>' = {
-  params: {
-    // Required parameters
-    aiServiceLocation: '<aiServiceLocation>'
-    usecase: 'telecom'
-    // Non-required parameters
-    enableMonitoring: true
-    enablePrivateNetworking: true
-    enableRedundancy: true
-    enableScalability: true
-    enableTelemetry: true
-    location: '<location>'
-    secondaryLocation: '<secondaryLocation>'
-    solutionName: '<solutionName>'
-    vmAdminPassword: '<vmAdminPassword>'
-    vmAdminUsername: 'adminuser'
-  }
-}
-```
-
-</details>
-<p>
-
-<details>
-
-<summary>via JSON parameters file</summary>
-
-```json
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    // Required parameters
-    "aiServiceLocation": {
-      "value": "<aiServiceLocation>"
-    },
-    "usecase": {
-      "value": "telecom"
-    },
-    // Non-required parameters
-    "enableMonitoring": {
-      "value": true
-    },
-    "enablePrivateNetworking": {
-      "value": true
-    },
-    "enableRedundancy": {
-      "value": true
-    },
-    "enableScalability": {
-      "value": true
-    },
-    "enableTelemetry": {
-      "value": true
-    },
-    "location": {
-      "value": "<location>"
-    },
-    "secondaryLocation": {
-      "value": "<secondaryLocation>"
-    },
-    "solutionName": {
-      "value": "<solutionName>"
-    },
-    "vmAdminPassword": {
-      "value": "<vmAdminPassword>"
-    },
-    "vmAdminUsername": {
-      "value": "adminuser"
-    }
-  }
-}
-```
-
-</details>
-<p>
-
-<details>
-
-<summary>via Bicep parameters file</summary>
-
-```bicep-params
-using 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>'
-
-// Required parameters
-param aiServiceLocation = '<aiServiceLocation>'
-param usecase = 'telecom'
-// Non-required parameters
-param enableMonitoring = true
-param enablePrivateNetworking = true
-param enableRedundancy = true
-param enableScalability = true
-param enableTelemetry = true
-param location = '<location>'
-param secondaryLocation = '<secondaryLocation>'
-param solutionName = '<solutionName>'
-param vmAdminPassword = '<vmAdminPassword>'
-param vmAdminUsername = 'adminuser'
-```
-
-</details>
-<p>
 
 ## Parameters
 
@@ -673,6 +480,7 @@ Size of the Jumpbox Virtual Machine when created. Set to custom value if enableP
 | Output | Type | Description |
 | :-- | :-- | :-- |
 | `acrName` | string | Contains Azure Container Registry name. |
+| `acrLoginServer` | string | Contains Azure Container Registry login server. |
 | `agentNameConversation` | string | Contains Conversation Agent name. |
 | `agentNameTitle` | string | Contains Title Agent name. |
 | `aiFoundryResourceId` | string | Resource ID of the AI Foundry Project. |
@@ -711,6 +519,7 @@ Size of the Jumpbox Virtual Machine when created. Set to custom value if enableP
 | `resourceGroupLocation` | string | Contains Resource Group Location. |
 | `resourceGroupName` | string | Contains Resource Group Name. |
 | `solutionName` | string | Contains Solution Name. |
+| `frontendAppName` | string | Contains frontend application name. |
 | `sqlDBDatabase` | string | Contains SQL database name. |
 | `sqlDBServer` | string | Contains SQL server name. |
 | `storageAccountName` | string | Name of the Storage Account. |

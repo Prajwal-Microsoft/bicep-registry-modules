@@ -5,7 +5,7 @@ metadata description = '''This module deploys the [Conversation Knowledge Mining
 
 |**Post-Deployment Step** |
 |-------------|
-| After completing the deployment, follow the steps in the [Post-Deployment Guide](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/documents/AVMPostDeploymentGuide.md) to configure and verify your environment. |
+| After completing the deployment, follow [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) to run image build/push and data setup scripts. |
 
 > **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.
 '''
@@ -1629,6 +1629,9 @@ output azureAiAgentModelDeploymentName string = gptModelName
 @description('Contains Azure Container Registry name.')
 output acrName string = acrName
 
+@description('Contains Azure Container Registry login server.')
+output acrLoginServer string = '${acrName}.azurecr.io'
+
 @description('Contains Azure environment image tag.')
 output azureEnvImageTag string = backendContainerImageTag
 
@@ -1657,6 +1660,9 @@ output azureOpenAICuEndpoint string = aiFoundryAiServices.outputs.endpoints['Con
 
 @description('Contains API application name.')
 output apiAppName string = 'api-${solutionSuffix}'
+
+@description('Contains frontend application name.')
+output frontendAppName string = 'app-${solutionSuffix}'
 
 @description('Contains Conversation Agent name.')
 output agentNameConversation string = ''
