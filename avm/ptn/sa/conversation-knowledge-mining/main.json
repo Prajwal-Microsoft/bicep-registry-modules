@@ -6,10 +6,10 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "11214759006425484245"
+      "templateHash": "4547103980359176682"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
-    "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, follow [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) to run image build/push and data setup scripts. |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
+    "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, run the post-deployment scripts below (from the [accelerator repository](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator)) to build & push the application container images, grant the API's managed identity access to Azure SQL, and load sample data. These scripts read their configuration from an `azd` environment. Since this module is deployed via Bicep/AVM (not `azd up`), populate a local `azd` environment from just your resource group name first, then run the scripts unmodified - see [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) for what each script does: <ol><li>Clone the accelerator repo: `git clone https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator.git` and `cd` into it, then create a local environment: `azd env new avm-postdeploy`.</li><li>Resolve the resource names from your resource group (`$rg`) with the Azure CLI - ACR (`az acr list -g $rg`), API/frontend App Services (`az webapp list -g $rg`, names prefixed `api-`/`app-`), SQL server/database (`az sql server list -g $rg`, `az sql db list -g $rg --server <server>`), and the backend's identity principal (`az identity list -g $rg`, name prefixed `id-backend-` - this user-assigned identity is what the API uses to authenticate to SQL, exposed as `SQLDB_USER_MID`) - then populate the `azd` environment with `azd env set` for each of `RESOURCE_GROUP_NAME`, `ACR_NAME`, `API_APP_NAME`, `FRONTEND_APP_NAME`, `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_API_PRINCIPAL_ID`, and `SERVICE_BACKEND_URI`.</li><li>Build & push the container images to ACR and point the App Services at them: `./infra/scripts/build/build_and_push_images.ps1`.</li><li>Grant the API's managed identity access to Azure SQL (run as the SQL Microsoft Entra ID admin): `./infra/scripts/post-provision/setup-sql-roles.ps1`.</li><li>Load sample data or connect a data source (interactive menu): `./infra/scripts/post-provision/setup-data.ps1 -AllowDeployedFallback`.</li></ol> |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
   },
   "parameters": {
     "solutionName": {
@@ -40114,10 +40114,10 @@
         }
       },
       "dependsOn": [
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageDfs)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageDfs)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "userAssignedIdentity",
         "virtualNetwork"
       ]
