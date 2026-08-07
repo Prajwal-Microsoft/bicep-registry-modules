@@ -144,7 +144,7 @@ param vmAdminUsername string?
 param vmAdminPassword string?
 
 @description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
-param vmSize string = 'Standard_DS2_v2'
+param vmSize string = 'Standard_D2s_v6'
 
 @description('Optional. Created by user name.')
 param createdBy string = contains(deployer(), 'userPrincipalName')
@@ -400,7 +400,7 @@ module jumpboxPPG 'br/public:avm/res/compute/proximity-placement-group:0.4.1' = 
     intent: enableRedundancy
       ? {
           vmSizes: [
-            vmSize ?? 'Standard_DS2_v2'
+            vmSize ?? 'Standard_D2s_v6'
           ]
         }
       : null
@@ -529,7 +529,7 @@ module jumpboxVM 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (enable
   name: take('avm.res.compute.virtual-machine.${jumpboxVmName}', 64)
   params: {
     name: take(jumpboxVmName, 15) // Shorten VM name to 15 characters to avoid Azure limits
-    vmSize: vmSize ?? 'Standard_DS2_v2'
+    vmSize: vmSize ?? 'Standard_D2s_v6'
     location: location
     adminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
     adminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'

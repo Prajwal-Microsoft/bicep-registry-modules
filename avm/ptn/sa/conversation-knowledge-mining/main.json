@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "10669601700571089103"
+      "templateHash": "10052585031125092960"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
     "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, follow [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) to run image build/push and data setup scripts. |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
@@ -259,7 +259,7 @@
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_DS2_v2",
+      "defaultValue": "Standard_D2s_v6",
       "metadata": {
         "description": "Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true."
       }
@@ -9483,7 +9483,7 @@
             "value": "[parameters('enableTelemetry')]"
           },
           "availabilityZone": "[if(parameters('enableRedundancy'), createObject('value', 1), createObject('value', -1))]",
-          "intent": "[if(parameters('enableRedundancy'), createObject('value', createObject('vmSizes', createArray(coalesce(parameters('vmSize'), 'Standard_DS2_v2')))), createObject('value', null()))]"
+          "intent": "[if(parameters('enableRedundancy'), createObject('value', createObject('vmSizes', createArray(coalesce(parameters('vmSize'), 'Standard_D2s_v6')))), createObject('value', null()))]"
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
@@ -11173,7 +11173,7 @@
             "value": "[take(variables('jumpboxVmName'), 15)]"
           },
           "vmSize": {
-            "value": "[coalesce(parameters('vmSize'), 'Standard_DS2_v2')]"
+            "value": "[coalesce(parameters('vmSize'), 'Standard_D2s_v6')]"
           },
           "location": {
             "value": "[parameters('location')]"
