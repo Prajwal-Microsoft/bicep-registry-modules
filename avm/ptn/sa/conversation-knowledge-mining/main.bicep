@@ -54,7 +54,7 @@ param usecase string
 
 @minLength(1)
 @description('Optional. Secondary location for databases creation (example: eastus2).')
-param secondaryLocation string = 'eastus2'
+param secondaryLocation string = 'centralus'
 
 @description('Optional. Location for the Cosmos DB replica deployment. This location is used when enableRedundancy is set to true.')
 param cosmosDbReplicaLocation string = 'canadacentral'
@@ -68,10 +68,10 @@ param cosmosDbReplicaLocation string = 'canadacentral'
 param deploymentType string = 'GlobalStandard'
 
 @description('Optional. Name of the GPT model to deploy.')
-param gptModelName string = 'gpt-4o-mini'
+param gptModelName string = 'gpt-4o'
 
 @description('Optional. Version of the GPT model to deploy.')
-param gptModelVersion string = '2024-07-18'
+param gptModelVersion string = '2024-11-20'
 
 @description('Optional. Version of the Azure OpenAI API.')
 param azureOpenAIApiVersion string = '2025-01-01-preview'
@@ -99,23 +99,23 @@ param embeddingModel string = 'text-embedding-3-small'
 @description('Optional. Capacity of the Embedding Model deployment.')
 param embeddingDeploymentCapacity int = 80
 
-@description('Optional. The Container Registry hostname where the docker images for the backend are located.')
-param backendContainerRegistryHostname string = 'kmcontainerreg.azurecr.io'
+@description('Optional. The Container Registry hostname where the docker images for the backend are located. Leave empty (default) to use the Azure Container Registry provisioned by this module.')
+param backendContainerRegistryHostname string = ''
 
 @description('Optional. The Container Image Name to deploy on the backend.')
 param backendContainerImageName string = 'km-api'
 
 @description('Optional. The Container Image Tag to deploy on the backend.')
-param backendContainerImageTag string = 'latest_afv2_2026-05-18_1589'
+param backendContainerImageTag string = 'latest'
 
-@description('Optional. The Container Registry hostname where the docker images for the frontend are located.')
-param frontendContainerRegistryHostname string = 'kmcontainerreg.azurecr.io'
+@description('Optional. The Container Registry hostname where the docker images for the frontend are located. Leave empty (default) to use the Azure Container Registry provisioned by this module.')
+param frontendContainerRegistryHostname string = ''
 
 @description('Optional. The Container Image Name to deploy on the frontend.')
 param frontendContainerImageName string = 'km-app'
 
 @description('Optional. The Container Image Tag to deploy on the frontend.')
-param frontendContainerImageTag string = 'latest_afv2_2026-05-18_1589'
+param frontendContainerImageTag string = 'latest'
 
 @description('Optional. The tags to apply to all deployed Azure resources.')
 param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags = {}
@@ -165,7 +165,6 @@ var solutionSuffix = toLower(trim(replace(
   ''
 )))
 
-var acrName = 'kmcontainerreg'
 // Replica regions list based on article in [Azure regions list](https://learn.microsoft.com/azure/reliability/regions-list) and [Enhance resilience by replicating your Log Analytics workspace across regions](https://learn.microsoft.com/azure/azure-monitor/logs/workspace-replication#supported-regions) for supported regions for Log Analytics Workspace.
 var replicaRegionPairs = {
   australiaeast: 'australiasoutheast'
@@ -178,9 +177,18 @@ var replicaRegionPairs = {
   southeastasia: 'eastasia'
   uksouth: 'westeurope'
   westeurope: 'northeurope'
+  westus3: 'eastus'
 }
 var replicaLocation = replicaRegionPairs[resourceGroup().location]
 var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace!.outputs.resourceId
+
+// Effective container registry hostnames: use the registry provisioned by this module unless the caller overrides it with an existing registry.
+var effectiveBackendContainerRegistryHostname = empty(backendContainerRegistryHostname)
+  ? containerRegistry.outputs.loginServer
+  : backendContainerRegistryHostname
+var effectiveFrontendContainerRegistryHostname = empty(frontendContainerRegistryHostname)
+  ? containerRegistry.outputs.loginServer
+  : frontendContainerRegistryHostname
 
 // ========== Resource Group Tag ========== //
 resource resourceGroupTags 'Microsoft.Resources/tags@2025-04-01' = {
@@ -606,6 +614,7 @@ var privateDnsZones = [
   'privatelink${environment().suffixes.sqlServerHostname}'
   'privatelink.search.windows.net'
   'privatelink.azurewebsites.net'
+  'privatelink.azurecr.io'
 ]
 
 // DNS Zone Index Constants
@@ -621,6 +630,7 @@ var dnsZoneIndex = {
   sqlServer: 8
   search: 9
   webApp: 10
+  containerRegistry: 11
 }
 
 // ===================================================
@@ -1314,6 +1324,58 @@ module sqlDbPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.12.0' 
   }
 }
 
+// ========== Container Registry ========== //
+// WAF best practices for Container Registry: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-best-practices
+// Note: 'acrkm' static prefix (5 chars) guarantees the 5-character ACR name minimum is met even if solutionSuffix resolves to an empty string.
+var containerRegistryResourceName = 'acrkm${solutionSuffix}'
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' = {
+  name: take('avm.res.container-registry.registry.${containerRegistryResourceName}', 64)
+  params: {
+    name: containerRegistryResourceName
+    location: location
+    tags: tags
+    enableTelemetry: enableTelemetry
+    // WAF aligned configuration - Premium SKU is required for Private Endpoints; Standard matches the main repo's default otherwise.
+    acrSku: enablePrivateNetworking ? 'Premium' : 'Standard'
+    acrAdminUserEnabled: false
+    networkRuleBypassOptions: 'AzureServices'
+    // Note: networkRuleSetDefaultAction must be 'Allow' (not the module's 'Deny' default) when public access is enabled,
+    // otherwise the underlying module configures a networkRuleSet, which is only supported on Premium SKU.
+    networkRuleSetDefaultAction: enablePrivateNetworking ? 'Deny' : 'Allow'
+    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    zoneRedundancy: enableRedundancy ? 'Enabled' : 'Disabled'
+    roleAssignments: [
+      {
+        principalId: userAssignedIdentity.outputs.principalId
+        roleDefinitionIdOrName: 'AcrPull'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: backendUserAssignedIdentity.outputs.principalId
+        roleDefinitionIdOrName: 'AcrPull'
+        principalType: 'ServicePrincipal'
+      }
+    ]
+    // WAF aligned configuration for Monitoring
+    diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
+    // WAF aligned configuration for Private Networking
+    privateEndpoints: enablePrivateNetworking
+      ? [
+          {
+            name: 'pep-${containerRegistryResourceName}'
+            customNetworkInterfaceName: 'nic-${containerRegistryResourceName}'
+            subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                { privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.containerRegistry]!.outputs.resourceId }
+              ]
+            }
+          }
+        ]
+      : []
+  }
+}
+
 // ========== AVM WAF server farm ========== //
 // WAF best practices for Web Application Services: https://learn.microsoft.com/en-us/azure/well-architected/service-guides/app-service-web-apps
 // PSRule for Web Server Farm: https://azure.github.io/PSRule.Rules.Azure/en/rules/resource/#app-service
@@ -1416,8 +1478,10 @@ module webSiteBackend 'modules/web-sites.bicep' = {
       ]
     }
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${backendContainerRegistryHostname}/${backendContainerImageName}:${backendContainerImageTag}'
+      linuxFxVersion: 'DOCKER|${effectiveBackendContainerRegistryHostname}/${backendContainerImageName}:${backendContainerImageTag}'
       minTlsVersion: '1.2'
+      acrUseManagedIdentityCreds: true
+      acrUserManagedIdentityID: backendUserAssignedIdentity.outputs.clientId
     }
     configs: [
       {
@@ -1499,10 +1563,15 @@ module webSiteFrontend 'modules/web-sites.bicep' = {
     serverFarmResourceId: webServerFarm.outputs.resourceId
     managedIdentities: {
       systemAssigned: true
+      userAssignedResourceIds: [
+        userAssignedIdentity.outputs.resourceId
+      ]
     }
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${frontendContainerRegistryHostname}/${frontendContainerImageName}:${frontendContainerImageTag}'
+      linuxFxVersion: 'DOCKER|${effectiveFrontendContainerRegistryHostname}/${frontendContainerImageName}:${frontendContainerImageTag}'
       minTlsVersion: '1.2'
+      acrUseManagedIdentityCreds: true
+      acrUserManagedIdentityID: userAssignedIdentity.outputs.clientId
     }
     configs: [
       {
@@ -1627,10 +1696,10 @@ output azureAiAgentEndpoint string = aiFoundryAiServices.outputs.aiProjectInfo.a
 output azureAiAgentModelDeploymentName string = gptModelName
 
 @description('Contains Azure Container Registry name.')
-output acrName string = acrName
+output acrName string = containerRegistry.outputs.name
 
 @description('Contains Azure Container Registry login server.')
-output acrLoginServer string = '${acrName}.azurecr.io'
+output acrLoginServer string = containerRegistry.outputs.loginServer
 
 @description('Contains Azure environment image tag.')
 output azureEnvImageTag string = backendContainerImageTag
