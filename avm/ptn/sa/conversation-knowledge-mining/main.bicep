@@ -5,7 +5,7 @@ metadata description = '''This module deploys the [Conversation Knowledge Mining
 
 |**Post-Deployment Step** |
 |-------------|
-| After completing the deployment, follow the steps in the [Post-Deployment Guide](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/documents/AVMPostDeploymentGuide.md) to configure and verify your environment. |
+| After completing the deployment, run the post-deployment scripts below (from the [accelerator repository](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator)) to build & push the application container images, grant the API's managed identity access to Azure SQL, and load sample data. These scripts read their configuration from an `azd` environment. Since this module is deployed via Bicep/AVM (not `azd up`), populate a local `azd` environment from just your resource group name first, then run the scripts unmodified - see [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) for what each script does: <ol><li>Clone the accelerator repo: `git clone https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator.git` and `cd` into it, then create a local environment: `azd env new avm-postdeploy`.</li><li>Resolve the resource names from your resource group (`$rg`) with the Azure CLI - ACR (`az acr list -g $rg`), API/frontend App Services (`az webapp list -g $rg`, names prefixed `api-`/`app-`), SQL server/database (`az sql server list -g $rg`, `az sql db list -g $rg --server <server>`), and the backend's identity principal (`az identity list -g $rg`, name prefixed `id-backend-` - this user-assigned identity is what the API uses to authenticate to SQL, exposed as `SQLDB_USER_MID`) - then populate the `azd` environment with `azd env set` for each of `RESOURCE_GROUP_NAME`, `ACR_NAME`, `API_APP_NAME`, `FRONTEND_APP_NAME`, `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_API_PRINCIPAL_ID`, and `SERVICE_BACKEND_URI`.</li><li>Build & push the container images to ACR and point the App Services at them: `./infra/scripts/build/build_and_push_images.ps1`.</li><li>Grant the API's managed identity access to Azure SQL (run as the SQL Microsoft Entra ID admin): `./infra/scripts/post-provision/setup-sql-roles.ps1`.</li><li>Load sample data or connect a data source (interactive menu): `./infra/scripts/post-provision/setup-data.ps1 -AllowDeployedFallback`.</li></ol> |
 
 > **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.
 '''
@@ -54,7 +54,7 @@ param usecase string
 
 @minLength(1)
 @description('Optional. Secondary location for databases creation (example: eastus2).')
-param secondaryLocation string = 'eastus2'
+param secondaryLocation string = 'centralus'
 
 @description('Optional. Location for the Cosmos DB replica deployment. This location is used when enableRedundancy is set to true.')
 param cosmosDbReplicaLocation string = 'canadacentral'
@@ -68,10 +68,10 @@ param cosmosDbReplicaLocation string = 'canadacentral'
 param deploymentType string = 'GlobalStandard'
 
 @description('Optional. Name of the GPT model to deploy.')
-param gptModelName string = 'gpt-4o-mini'
+param gptModelName string = 'gpt-4o'
 
 @description('Optional. Version of the GPT model to deploy.')
-param gptModelVersion string = '2024-07-18'
+param gptModelVersion string = '2024-11-20'
 
 @description('Optional. Version of the Azure OpenAI API.')
 param azureOpenAIApiVersion string = '2025-01-01-preview'
@@ -99,23 +99,23 @@ param embeddingModel string = 'text-embedding-3-small'
 @description('Optional. Capacity of the Embedding Model deployment.')
 param embeddingDeploymentCapacity int = 80
 
-@description('Optional. The Container Registry hostname where the docker images for the backend are located.')
-param backendContainerRegistryHostname string = 'kmcontainerreg.azurecr.io'
+@description('Optional. The Container Registry hostname where the docker images for the backend are located. Leave empty (default) to use the Azure Container Registry provisioned by this module.')
+param backendContainerRegistryHostname string = ''
 
 @description('Optional. The Container Image Name to deploy on the backend.')
 param backendContainerImageName string = 'km-api'
 
 @description('Optional. The Container Image Tag to deploy on the backend.')
-param backendContainerImageTag string = 'latest_afv2_2026-05-18_1589'
+param backendContainerImageTag string = 'latest'
 
-@description('Optional. The Container Registry hostname where the docker images for the frontend are located.')
-param frontendContainerRegistryHostname string = 'kmcontainerreg.azurecr.io'
+@description('Optional. The Container Registry hostname where the docker images for the frontend are located. Leave empty (default) to use the Azure Container Registry provisioned by this module.')
+param frontendContainerRegistryHostname string = ''
 
 @description('Optional. The Container Image Name to deploy on the frontend.')
 param frontendContainerImageName string = 'km-app'
 
 @description('Optional. The Container Image Tag to deploy on the frontend.')
-param frontendContainerImageTag string = 'latest_afv2_2026-05-18_1589'
+param frontendContainerImageTag string = 'latest'
 
 @description('Optional. The tags to apply to all deployed Azure resources.')
 param tags resourceInput<'Microsoft.Resources/resourceGroups@2025-04-01'>.tags = {}
@@ -144,7 +144,7 @@ param vmAdminUsername string?
 param vmAdminPassword string?
 
 @description('Optional. Size of the Jumpbox Virtual Machine when created. Set to custom value if enablePrivateNetworking is true.')
-param vmSize string = 'Standard_DS2_v2'
+param vmSize string = 'Standard_D2s_v5'
 
 @description('Optional. Created by user name.')
 param createdBy string = contains(deployer(), 'userPrincipalName')
@@ -165,7 +165,6 @@ var solutionSuffix = toLower(trim(replace(
   ''
 )))
 
-var acrName = 'kmcontainerreg'
 // Replica regions list based on article in [Azure regions list](https://learn.microsoft.com/azure/reliability/regions-list) and [Enhance resilience by replicating your Log Analytics workspace across regions](https://learn.microsoft.com/azure/azure-monitor/logs/workspace-replication#supported-regions) for supported regions for Log Analytics Workspace.
 var replicaRegionPairs = {
   australiaeast: 'australiasoutheast'
@@ -178,9 +177,18 @@ var replicaRegionPairs = {
   southeastasia: 'eastasia'
   uksouth: 'westeurope'
   westeurope: 'northeurope'
+  westus3: 'eastus'
 }
 var replicaLocation = replicaRegionPairs[resourceGroup().location]
 var logAnalyticsWorkspaceResourceId = logAnalyticsWorkspace!.outputs.resourceId
+
+// Effective container registry hostnames: use the registry provisioned by this module unless the caller overrides it with an existing registry.
+var effectiveBackendContainerRegistryHostname = empty(backendContainerRegistryHostname)
+  ? containerRegistry.outputs.loginServer
+  : backendContainerRegistryHostname
+var effectiveFrontendContainerRegistryHostname = empty(frontendContainerRegistryHostname)
+  ? containerRegistry.outputs.loginServer
+  : frontendContainerRegistryHostname
 
 // ========== Resource Group Tag ========== //
 resource resourceGroupTags 'Microsoft.Resources/tags@2025-04-01' = {
@@ -392,7 +400,7 @@ module jumpboxPPG 'br/public:avm/res/compute/proximity-placement-group:0.4.1' = 
     intent: enableRedundancy
       ? {
           vmSizes: [
-            vmSize ?? 'Standard_DS2_v2'
+            vmSize ?? 'Standard_D2s_v5'
           ]
         }
       : null
@@ -521,10 +529,13 @@ module jumpboxVM 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (enable
   name: take('avm.res.compute.virtual-machine.${jumpboxVmName}', 64)
   params: {
     name: take(jumpboxVmName, 15) // Shorten VM name to 15 characters to avoid Azure limits
-    vmSize: vmSize ?? 'Standard_DS2_v2'
+    vmSize: vmSize ?? 'Standard_D2s_v5'
     location: location
     adminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
-    adminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
+    // WAF/security aligned configuration: derive a deterministic, non-hardcoded fallback password unique
+    // per subscription/solution (instead of a fixed default), reducing the risk of credential reuse/guessing
+    // when the caller does not supply vmAdminPassword. Login is expected via Microsoft Entra ID through Bastion.
+    adminPassword: vmAdminPassword ?? 'Vm!${uniqueString(subscription().subscriptionId, solutionName)}${guid(subscription().subscriptionId, solutionName, 'vm-admin-password')}'
     tags: tags
     imageReference: {
       publisher: 'microsoft-dsvm'
@@ -606,6 +617,7 @@ var privateDnsZones = [
   'privatelink${environment().suffixes.sqlServerHostname}'
   'privatelink.search.windows.net'
   'privatelink.azurewebsites.net'
+  'privatelink.azurecr.io'
 ]
 
 // DNS Zone Index Constants
@@ -621,6 +633,7 @@ var dnsZoneIndex = {
   sqlServer: 8
   search: 9
   webApp: 10
+  containerRegistry: 11
 }
 
 // ===================================================
@@ -765,7 +778,10 @@ module aiFoundryAiServices 'modules/ai-services.bicep' = if (aiFoundryAIservices
     ]
     // WAF aligned configuration for Monitoring
     diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
-    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    // NOTE: Intentionally public regardless of enablePrivateNetworking. The AI Foundry Agent runtime and
+    // AI Search Knowledge Base (used for answer synthesis) run outside the customer's VNet and cannot resolve
+    // private DNS zones, so public access must stay enabled even when a private endpoint is also attached below.
+    publicNetworkAccess: 'Enabled'
     privateEndpoints: (enablePrivateNetworking)
       ? ([
           {
@@ -888,22 +904,11 @@ module searchServiceUpdate 'br/public:avm/res/search/search-service:0.12.0' = {
     semanticSearch: 'free'
     // Use the deployment tags provided to the template
     tags: tags
-    publicNetworkAccess: 'Enabled' //enablePrivateNetworking ? 'Disabled' : 'Enabled'
-    privateEndpoints: false //enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-${aiSearchName}'
-            customNetworkInterfaceName: 'nic-${aiSearchName}'
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.search]!.outputs.resourceId }
-              ]
-            }
-            service: 'searchService'
-            subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
-          }
-        ]
-      : []
+    // NOTE: Intentionally public regardless of enablePrivateNetworking. The AI Foundry Agent runtime
+    // (used for answer synthesis / Knowledge Base retrieval) runs outside the customer's VNet and cannot
+    // resolve private DNS zones, so a private endpoint here would break Agent-to-Search connectivity.
+    publicNetworkAccess: 'Enabled'
+    privateEndpoints: []
   }
   dependsOn: [
     searchService
@@ -1314,6 +1319,58 @@ module sqlDbPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.12.0' 
   }
 }
 
+// ========== Container Registry ========== //
+// WAF best practices for Container Registry: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-best-practices
+// Note: 'acrkm' static prefix (5 chars) guarantees the 5-character ACR name minimum is met even if solutionSuffix resolves to an empty string.
+var containerRegistryResourceName = 'acrkm${solutionSuffix}'
+module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' = {
+  name: take('avm.res.container-registry.registry.${containerRegistryResourceName}', 64)
+  params: {
+    name: containerRegistryResourceName
+    location: location
+    tags: tags
+    enableTelemetry: enableTelemetry
+    // WAF aligned configuration - Premium SKU is required for Private Endpoints; Standard matches the main repo's default otherwise.
+    acrSku: enablePrivateNetworking ? 'Premium' : 'Standard'
+    acrAdminUserEnabled: false
+    networkRuleBypassOptions: 'AzureServices'
+    // Note: networkRuleSetDefaultAction must be 'Allow' (not the module's 'Deny' default) when public access is enabled,
+    // otherwise the underlying module configures a networkRuleSet, which is only supported on Premium SKU.
+    networkRuleSetDefaultAction: enablePrivateNetworking ? 'Deny' : 'Allow'
+    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    zoneRedundancy: enableRedundancy ? 'Enabled' : 'Disabled'
+    roleAssignments: [
+      {
+        principalId: userAssignedIdentity.outputs.principalId
+        roleDefinitionIdOrName: 'AcrPull'
+        principalType: 'ServicePrincipal'
+      }
+      {
+        principalId: backendUserAssignedIdentity.outputs.principalId
+        roleDefinitionIdOrName: 'AcrPull'
+        principalType: 'ServicePrincipal'
+      }
+    ]
+    // WAF aligned configuration for Monitoring
+    diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
+    // WAF aligned configuration for Private Networking
+    privateEndpoints: enablePrivateNetworking
+      ? [
+          {
+            name: 'pep-${containerRegistryResourceName}'
+            customNetworkInterfaceName: 'nic-${containerRegistryResourceName}'
+            subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
+            privateDnsZoneGroup: {
+              privateDnsZoneGroupConfigs: [
+                { privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.containerRegistry]!.outputs.resourceId }
+              ]
+            }
+          }
+        ]
+      : []
+  }
+}
+
 // ========== AVM WAF server farm ========== //
 // WAF best practices for Web Application Services: https://learn.microsoft.com/en-us/azure/well-architected/service-guides/app-service-web-apps
 // PSRule for Web Server Farm: https://azure.github.io/PSRule.Rules.Azure/en/rules/resource/#app-service
@@ -1416,8 +1473,10 @@ module webSiteBackend 'modules/web-sites.bicep' = {
       ]
     }
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${backendContainerRegistryHostname}/${backendContainerImageName}:${backendContainerImageTag}'
+      linuxFxVersion: 'DOCKER|${effectiveBackendContainerRegistryHostname}/${backendContainerImageName}:${backendContainerImageTag}'
       minTlsVersion: '1.2'
+      acrUseManagedIdentityCreds: true
+      acrUserManagedIdentityID: backendUserAssignedIdentity.outputs.clientId
     }
     configs: [
       {
@@ -1499,10 +1558,15 @@ module webSiteFrontend 'modules/web-sites.bicep' = {
     serverFarmResourceId: webServerFarm.outputs.resourceId
     managedIdentities: {
       systemAssigned: true
+      userAssignedResourceIds: [
+        userAssignedIdentity.outputs.resourceId
+      ]
     }
     siteConfig: {
-      linuxFxVersion: 'DOCKER|${frontendContainerRegistryHostname}/${frontendContainerImageName}:${frontendContainerImageTag}'
+      linuxFxVersion: 'DOCKER|${effectiveFrontendContainerRegistryHostname}/${frontendContainerImageName}:${frontendContainerImageTag}'
       minTlsVersion: '1.2'
+      acrUseManagedIdentityCreds: true
+      acrUserManagedIdentityID: userAssignedIdentity.outputs.clientId
     }
     configs: [
       {
@@ -1519,6 +1583,8 @@ module webSiteFrontend 'modules/web-sites.bicep' = {
     vnetImagePullEnabled: enablePrivateNetworking ? true : false
     virtualNetworkSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.webSubnetResourceId : null
     diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
+    // NOTE: Intentionally public regardless of enablePrivateNetworking so end users can reach the UI directly.
+    // Outbound traffic (to the private backend/ACR) is still routed through the VNet via vnetRouteAllEnabled/virtualNetworkSubnetId above.
     publicNetworkAccess: 'Enabled'
   }
 }
@@ -1627,7 +1693,10 @@ output azureAiAgentEndpoint string = aiFoundryAiServices.outputs.aiProjectInfo.a
 output azureAiAgentModelDeploymentName string = gptModelName
 
 @description('Contains Azure Container Registry name.')
-output acrName string = acrName
+output acrName string = containerRegistry.outputs.name
+
+@description('Contains Azure Container Registry login server.')
+output acrLoginServer string = containerRegistry.outputs.loginServer
 
 @description('Contains Azure environment image tag.')
 output azureEnvImageTag string = backendContainerImageTag
@@ -1657,6 +1726,9 @@ output azureOpenAICuEndpoint string = aiFoundryAiServices.outputs.endpoints['Con
 
 @description('Contains API application name.')
 output apiAppName string = 'api-${solutionSuffix}'
+
+@description('Contains frontend application name.')
+output frontendAppName string = 'app-${solutionSuffix}'
 
 @description('Contains Conversation Agent name.')
 output agentNameConversation string = ''
