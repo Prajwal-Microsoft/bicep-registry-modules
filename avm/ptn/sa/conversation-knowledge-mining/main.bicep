@@ -775,7 +775,10 @@ module aiFoundryAiServices 'modules/ai-services.bicep' = if (aiFoundryAIservices
     ]
     // WAF aligned configuration for Monitoring
     diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
-    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
+    // NOTE: Intentionally public regardless of enablePrivateNetworking. The AI Foundry Agent runtime and
+    // AI Search Knowledge Base (used for answer synthesis) run outside the customer's VNet and cannot resolve
+    // private DNS zones, so public access must stay enabled even when a private endpoint is also attached below.
+    publicNetworkAccess: 'Enabled'
     privateEndpoints: (enablePrivateNetworking)
       ? ([
           {
@@ -898,22 +901,11 @@ module searchServiceUpdate 'br/public:avm/res/search/search-service:0.12.0' = {
     semanticSearch: 'free'
     // Use the deployment tags provided to the template
     tags: tags
-    publicNetworkAccess: 'Enabled' //enablePrivateNetworking ? 'Disabled' : 'Enabled'
-    privateEndpoints: false //enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-${aiSearchName}'
-            customNetworkInterfaceName: 'nic-${aiSearchName}'
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: avmPrivateDnsZones[dnsZoneIndex.search]!.outputs.resourceId }
-              ]
-            }
-            service: 'searchService'
-            subnetResourceId: virtualNetwork!.outputs.pepsSubnetResourceId
-          }
-        ]
-      : []
+    // NOTE: Intentionally public regardless of enablePrivateNetworking. The AI Foundry Agent runtime
+    // (used for answer synthesis / Knowledge Base retrieval) runs outside the customer's VNet and cannot
+    // resolve private DNS zones, so a private endpoint here would break Agent-to-Search connectivity.
+    publicNetworkAccess: 'Enabled'
+    privateEndpoints: []
   }
   dependsOn: [
     searchService
@@ -1588,6 +1580,8 @@ module webSiteFrontend 'modules/web-sites.bicep' = {
     vnetImagePullEnabled: enablePrivateNetworking ? true : false
     virtualNetworkSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.webSubnetResourceId : null
     diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
+    // NOTE: Intentionally public regardless of enablePrivateNetworking so end users can reach the UI directly.
+    // Outbound traffic (to the private backend/ACR) is still routed through the VNet via vnetRouteAllEnabled/virtualNetworkSubnetId above.
     publicNetworkAccess: 'Enabled'
   }
 }

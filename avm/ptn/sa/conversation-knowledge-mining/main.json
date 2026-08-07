@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "14014130561529610756"
+      "templateHash": "10669601700571089103"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
     "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, follow [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) to run image build/push and data setup scripts. |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
@@ -24767,7 +24767,9 @@
             ]
           },
           "diagnosticSettings": "[if(parameters('enableMonitoring'), createObject('value', createArray(createObject('workspaceResourceId', reference('logAnalyticsWorkspace').outputs.resourceId.value))), createObject('value', null()))]",
-          "publicNetworkAccess": "[if(parameters('enablePrivateNetworking'), createObject('value', 'Disabled'), createObject('value', 'Enabled'))]",
+          "publicNetworkAccess": {
+            "value": "Enabled"
+          },
           "privateEndpoints": "[if(parameters('enablePrivateNetworking'), createObject('value', createArray(createObject('name', format('pep-{0}', variables('aiFoundryAiServicesResourceName')), 'customNetworkInterfaceName', format('nic-{0}', variables('aiFoundryAiServicesResourceName')), 'subnetResourceId', reference('virtualNetwork').outputs.pepsSubnetResourceId.value, 'privateDnsZoneGroup', createObject('privateDnsZoneGroupConfigs', createArray(createObject('name', 'ai-services-dns-zone-cognitiveservices', 'privateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)).outputs.resourceId.value), createObject('name', 'ai-services-dns-zone-openai', 'privateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)).outputs.resourceId.value), createObject('name', 'ai-services-dns-zone-aiservices', 'privateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)).outputs.resourceId.value)))))), createObject('value', createArray()))]",
           "deployments": {
             "copy": [
@@ -29765,8 +29767,8 @@
       },
       "dependsOn": [
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
         "backendUserAssignedIdentity",
         "logAnalyticsWorkspace",
         "userAssignedIdentity",
@@ -29864,7 +29866,9 @@
           "publicNetworkAccess": {
             "value": "Enabled"
           },
-          "privateEndpoints": "[if(false(), createObject('value', createArray(createObject('name', format('pep-{0}', variables('aiSearchName')), 'customNetworkInterfaceName', format('nic-{0}', variables('aiSearchName')), 'privateDnsZoneGroup', createObject('privateDnsZoneGroupConfigs', createArray(createObject('privateDnsZoneResourceId', reference(format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').search)).outputs.resourceId.value))), 'service', 'searchService', 'subnetResourceId', reference('virtualNetwork').outputs.pepsSubnetResourceId.value))), createObject('value', createArray()))]"
+          "privateEndpoints": {
+            "value": []
+          }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
@@ -31900,12 +31904,10 @@
       },
       "dependsOn": [
         "aiFoundryAiServices",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').search)]",
         "backendUserAssignedIdentity",
         "logAnalyticsWorkspace",
         "searchService",
-        "userAssignedIdentity",
-        "virtualNetwork"
+        "userAssignedIdentity"
       ]
     },
     "storageAccount": {
