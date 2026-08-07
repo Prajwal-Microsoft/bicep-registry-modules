@@ -532,7 +532,10 @@ module jumpboxVM 'br/public:avm/res/compute/virtual-machine:0.22.0' = if (enable
     vmSize: vmSize ?? 'Standard_D2s_v5'
     location: location
     adminUsername: vmAdminUsername ?? 'JumpboxAdminUser'
-    adminPassword: vmAdminPassword ?? 'JumpboxAdminP@ssw0rd1234!'
+    // WAF/security aligned configuration: derive a deterministic, non-hardcoded fallback password unique
+    // per subscription/solution (instead of a fixed default), reducing the risk of credential reuse/guessing
+    // when the caller does not supply vmAdminPassword. Login is expected via Microsoft Entra ID through Bastion.
+    adminPassword: vmAdminPassword ?? 'Vm!${uniqueString(subscription().subscriptionId, solutionName)}${guid(subscription().subscriptionId, solutionName, 'vm-admin-password')}'
     tags: tags
     imageReference: {
       publisher: 'microsoft-dsvm'

@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "6750402382596144385"
+      "templateHash": "11214759006425484245"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
     "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, follow [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) to run image build/push and data setup scripts. |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
@@ -11182,7 +11182,7 @@
             "value": "[coalesce(parameters('vmAdminUsername'), 'JumpboxAdminUser')]"
           },
           "adminPassword": {
-            "value": "[coalesce(parameters('vmAdminPassword'), 'JumpboxAdminP@ssw0rd1234!')]"
+            "value": "[coalesce(parameters('vmAdminPassword'), format('Vm!{0}{1}', uniqueString(subscription().subscriptionId, parameters('solutionName')), guid(subscription().subscriptionId, parameters('solutionName'), 'vm-admin-password')))]"
           },
           "tags": {
             "value": "[parameters('tags')]"
@@ -29766,9 +29766,9 @@
         }
       },
       "dependsOn": [
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "backendUserAssignedIdentity",
         "logAnalyticsWorkspace",
         "userAssignedIdentity",
@@ -40114,10 +40114,10 @@
         }
       },
       "dependsOn": [
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageDfs)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
         "userAssignedIdentity",
         "virtualNetwork"
       ]
