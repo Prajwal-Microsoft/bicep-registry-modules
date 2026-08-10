@@ -1323,8 +1323,8 @@ module sqlDbPrivateEndpoint 'br/public:avm/res/network/private-endpoint:0.12.0' 
 // WAF best practices for Container Registry: https://learn.microsoft.com/en-us/azure/container-registry/container-registry-best-practices
 // Note: 'acrkm' static prefix (5 chars) guarantees the 5-character ACR name minimum is met even if solutionSuffix resolves to an empty string.
 var containerRegistryResourceName = 'acrkm${solutionSuffix}'
-module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' = {
-  name: take('avm.res.container-registry.registry.${containerRegistryResourceName}', 64)
+module containerRegistry 'modules/container-registry.bicep' = {
+  name: take('module.container-registry.${containerRegistryResourceName}', 64)
   params: {
     name: containerRegistryResourceName
     location: location
@@ -1339,6 +1339,9 @@ module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' 
     networkRuleSetDefaultAction: enablePrivateNetworking ? 'Deny' : 'Allow'
     publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
     zoneRedundancy: enableRedundancy ? 'Enabled' : 'Disabled'
+    // Required for App Service managed-identity image pulls (acrUseManagedIdentityCreds below); the underlying
+    // AVM module defaults this to 'disabled', which causes ACRTokenRetrievalFailure during container startup.
+    azureADAuthenticationAsArmPolicyStatus: 'enabled'
     roleAssignments: [
       {
         principalId: userAssignedIdentity.outputs.principalId
