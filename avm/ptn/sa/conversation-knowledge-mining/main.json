@@ -6,7 +6,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "12807488919858179031"
+      "templateHash": "15107813858422947808"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
     "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, run the post-deployment scripts below (from the [accelerator repository](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator)) to build & push the application container images, grant the API's managed identity access to Azure SQL, and load sample data - see [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) for what each script does. These scripts run directly against a resource group (no `azd` environment required for this Bicep/AVM deployment path). Replace `<resource-group-name>` below with the name of the resource group this module was deployed into: <ol><li>Clone the accelerator repo and set up a Python virtual environment: `git clone https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator.git`, `cd` into it, then `python -m venv .venv`, `./.venv/Scripts/Activate.ps1`, and `pip install -r infra/scripts/post-provision/requirements.txt`.</li><li>**If `enablePrivateNetworking` = `true` (WAF-aligned deployment) only:** temporarily allow public network access so the scripts below can reach the private data-plane resources: `./infra/scripts/post-provision/manage-network-access.ps1 -Action Enable -ResourceGroupName \"<resource-group-name>\"`.</li><li>Build & push the container images to ACR and point the App Services at them: `./infra/scripts/build/build_and_push_images.ps1 -ResourceGroupName \"<resource-group-name>\"`.</li><li>Grant the API's managed identity access to Azure SQL (run as the SQL Microsoft Entra ID admin): `./infra/scripts/post-provision/setup-sql-roles.ps1 -ResourceGroupName \"<resource-group-name>\"`.</li><li>Load sample data or connect a data source (interactive menu): `./infra/scripts/post-provision/setup-data.ps1 -ResourceGroupName \"<resource-group-name>\"`.</li><li>**If `enablePrivateNetworking` = `true` (WAF-aligned deployment) only:** restore private-only network access: `./infra/scripts/post-provision/manage-network-access.ps1 -Action Disable -ResourceGroupName \"<resource-group-name>\"`.</li></ol> |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
@@ -49,7 +49,7 @@
         "azd": {
           "type": "location",
           "usageName": [
-            "OpenAI.GlobalStandard.gpt-4o-mini,150",
+            "OpenAI.GlobalStandard.gpt-5.2,150",
             "OpenAI.GlobalStandard.text-embedding-3-small,80"
           ]
         },
@@ -96,14 +96,14 @@
     },
     "gptModelName": {
       "type": "string",
-      "defaultValue": "gpt-4o",
+      "defaultValue": "gpt-5.2",
       "metadata": {
         "description": "Optional. Name of the GPT model to deploy."
       }
     },
     "gptModelVersion": {
       "type": "string",
-      "defaultValue": "2024-11-20",
+      "defaultValue": "2025-12-11",
       "metadata": {
         "description": "Optional. Version of the GPT model to deploy."
       }
@@ -269,6 +269,17 @@
       "defaultValue": "[if(contains(deployer(), 'userPrincipalName'), split(deployer().userPrincipalName, '@')[0], deployer().objectId)]",
       "metadata": {
         "description": "Optional. Created by user name."
+      }
+    },
+    "principal": {
+      "type": "object",
+      "defaultValue": {
+        "id": "",
+        "name": "",
+        "type": "User"
+      },
+      "metadata": {
+        "description": "Optional. Principal object to assign application/data-plane roles needed for post-provisioning scripts (e.g. local data seeding). Format: {\"id\":\"<object-id>\", \"name\":\"<name-or-upn>\", \"type\":\"User|Group|ServicePrincipal\"}. Leave id empty to skip granting any additional access."
       }
     },
     "solutionUniqueText": {
@@ -29766,8 +29777,8 @@
         }
       },
       "dependsOn": [
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').cognitiveServices)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').openAI)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').aiServices)]",
         "backendUserAssignedIdentity",
         "logAnalyticsWorkspace",
@@ -29810,43 +29821,7 @@
             }
           },
           "roleAssignments": {
-            "value": [
-              {
-                "roleDefinitionIdOrName": "7ca78c08-252a-4471-8644-bb5ff32d4ba0",
-                "principalId": "[reference('userAssignedIdentity').outputs.principalId.value]",
-                "principalType": "ServicePrincipal"
-              },
-              {
-                "roleDefinitionIdOrName": "5e0bd9bd-7b93-4f28-af87-19fc36ad61bd",
-                "principalId": "[reference('userAssignedIdentity').outputs.principalId.value]",
-                "principalType": "ServicePrincipal"
-              },
-              {
-                "roleDefinitionIdOrName": "8ebe5a00-799e-43f5-93ac-243d3dce84a7",
-                "principalId": "[reference('userAssignedIdentity').outputs.principalId.value]",
-                "principalType": "ServicePrincipal"
-              },
-              {
-                "roleDefinitionIdOrName": "1407120a-92aa-4202-b7e9-c0e197c71c8f",
-                "principalId": "[reference('userAssignedIdentity').outputs.principalId.value]",
-                "principalType": "ServicePrincipal"
-              },
-              {
-                "roleDefinitionIdOrName": "1407120a-92aa-4202-b7e9-c0e197c71c8f",
-                "principalId": "[reference('backendUserAssignedIdentity').outputs.principalId.value]",
-                "principalType": "ServicePrincipal"
-              },
-              {
-                "roleDefinitionIdOrName": "1407120a-92aa-4202-b7e9-c0e197c71c8f",
-                "principalId": "[reference('aiFoundryAiServices').outputs.aiProjectInfo.value.aiprojectSystemAssignedMIPrincipalId]",
-                "principalType": "ServicePrincipal"
-              },
-              {
-                "roleDefinitionIdOrName": "7ca78c08-252a-4471-8644-bb5ff32d4ba0",
-                "principalId": "[reference('aiFoundryAiServices').outputs.aiProjectInfo.value.aiprojectSystemAssignedMIPrincipalId]",
-                "principalType": "ServicePrincipal"
-              }
-            ]
+            "value": "[concat(createArray(createObject('roleDefinitionIdOrName', '7ca78c08-252a-4471-8644-bb5ff32d4ba0', 'principalId', reference('userAssignedIdentity').outputs.principalId.value, 'principalType', 'ServicePrincipal'), createObject('roleDefinitionIdOrName', '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd', 'principalId', reference('userAssignedIdentity').outputs.principalId.value, 'principalType', 'ServicePrincipal'), createObject('roleDefinitionIdOrName', '8ebe5a00-799e-43f5-93ac-243d3dce84a7', 'principalId', reference('userAssignedIdentity').outputs.principalId.value, 'principalType', 'ServicePrincipal'), createObject('roleDefinitionIdOrName', '1407120a-92aa-4202-b7e9-c0e197c71c8f', 'principalId', reference('userAssignedIdentity').outputs.principalId.value, 'principalType', 'ServicePrincipal'), createObject('roleDefinitionIdOrName', '1407120a-92aa-4202-b7e9-c0e197c71c8f', 'principalId', reference('backendUserAssignedIdentity').outputs.principalId.value, 'principalType', 'ServicePrincipal'), createObject('roleDefinitionIdOrName', '1407120a-92aa-4202-b7e9-c0e197c71c8f', 'principalId', reference('aiFoundryAiServices').outputs.aiProjectInfo.value.aiprojectSystemAssignedMIPrincipalId, 'principalType', 'ServicePrincipal'), createObject('roleDefinitionIdOrName', '7ca78c08-252a-4471-8644-bb5ff32d4ba0', 'principalId', reference('aiFoundryAiServices').outputs.aiProjectInfo.value.aiprojectSystemAssignedMIPrincipalId, 'principalType', 'ServicePrincipal')), if(not(empty(parameters('principal').id)), createArray(createObject('roleDefinitionIdOrName', '8ebe5a00-799e-43f5-93ac-243d3dce84a7', 'principalId', parameters('principal').id, 'principalType', parameters('principal').type)), createArray()))]"
           },
           "partitionCount": {
             "value": 1
@@ -40114,10 +40089,10 @@
         }
       },
       "dependsOn": [
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageDfs)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageDfs)]",
         "userAssignedIdentity",
         "virtualNetwork"
       ]
@@ -40168,11 +40143,7 @@
                   "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*",
                   "Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*"
                 ],
-                "assignments": [
-                  {
-                    "principalId": "[reference('backendUserAssignedIdentity').outputs.principalId.value]"
-                  }
-                ]
+                "assignments": "[concat(createArray(createObject('principalId', reference('backendUserAssignedIdentity').outputs.principalId.value)), if(not(empty(parameters('principal').id)), createArray(createObject('principalId', parameters('principal').id)), createArray()))]"
               }
             ]
           },
@@ -58560,13 +58531,17 @@
                   "APP_FRONTEND_HOSTNAME": "[format('https://app-{0}.azurewebsites.net', variables('solutionSuffix'))]",
                   "AI_FOUNDRY_RESOURCE_ID": "[reference('aiFoundryAiServices').outputs.resourceId.value]",
                   "AZURE_OPENAI_DEPLOYMENT_MODEL": "[parameters('gptModelName')]",
+                  "AZURE_OPENAI_CHAT_DEPLOYMENT": "[parameters('gptModelName')]",
+                  "AZURE_OPENAI_EMBEDDING_DEPLOYMENT": "[parameters('embeddingModel')]",
                   "AZURE_OPENAI_ENDPOINT": "[format('https://{0}.openai.azure.com/', reference('aiFoundryAiServices').outputs.name.value)]",
                   "AZURE_OPENAI_API_VERSION": "[parameters('azureOpenAIApiVersion')]",
                   "AZURE_OPENAI_RESOURCE": "[reference('aiFoundryAiServices').outputs.name.value]",
                   "AZURE_CONTENT_UNDERSTANDING_ENDPOINT": "[reference('aiFoundryAiServices').outputs.endpoints.value['Content Understanding']]",
+                  "AZURE_CONTENT_UNDERSTANDING_API_VERSION": "[parameters('azureContentUnderstandingApiVersion')]",
                   "AZURE_AI_AGENT_ENDPOINT": "[reference('aiFoundryAiServices').outputs.aiProjectInfo.value.apiEndpoint]",
                   "AZURE_AI_AGENT_API_VERSION": "[parameters('azureAiAgentApiVersion')]",
                   "AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME": "[parameters('gptModelName')]",
+                  "AZURE_AI_AGENT_MODEL": "[parameters('gptModelName')]",
                   "USE_CHAT_HISTORY_ENABLED": "True",
                   "AZURE_COSMOSDB_ACCOUNT": "[reference('cosmosDb').outputs.name.value]",
                   "AZURE_COSMOSDB_CONVERSATIONS_CONTAINER": "[variables('collectionName')]",
@@ -58576,21 +58551,26 @@
                   "SQLDB_SERVER": "[format('{0}{1}', reference('sqlDBModule').outputs.name.value, environment().suffixes.sqlServerHostname)]",
                   "SQLDB_USER_MID": "[reference('backendUserAssignedIdentity').outputs.clientId.value]",
                   "AZURE_SQL_SERVER": "[format('{0}{1}', reference('sqlDBModule').outputs.name.value, environment().suffixes.sqlServerHostname)]",
+                  "AZURE_SQL_DATABASE": "[format('sqldb-{0}', variables('solutionSuffix'))]",
                   "AZURE_STORAGE_ACCOUNT": "[reference('storageAccount').outputs.name.value]",
+                  "AZURE_STORAGE_CONTAINER": "data",
                   "AZURE_AI_SEARCH_ENDPOINT": "[format('https://{0}.search.windows.net', variables('aiSearchName'))]",
                   "AZURE_AI_SEARCH_INDEX": "call_transcripts_index",
                   "AZURE_AI_SEARCH_CONNECTION_NAME": "[variables('aiSearchConnectionName')]",
                   "AZURE_SEARCH_ENDPOINT": "[format('https://{0}.search.windows.net', variables('aiSearchName'))]",
+                  "AZURE_SEARCH_INDEX_NAME": "call_transcripts_index",
                   "USE_AI_PROJECT_CLIENT": "True",
                   "DISPLAY_CHART_DEFAULT": "False",
                   "APPLICATIONINSIGHTS_CONNECTION_STRING": "[if(parameters('enableMonitoring'), reference('applicationInsights').outputs.connectionString.value, '')]",
                   "DUMMY_TEST": "True",
                   "SOLUTION_NAME": "[variables('solutionSuffix')]",
+                  "SOLUTION_SUFFIX": "[variables('solutionSuffix')]",
                   "APP_ENV": "Prod",
                   "AZURE_CLIENT_ID": "[reference('backendUserAssignedIdentity').outputs.clientId.value]",
                   "AZURE_BASIC_LOGGING_LEVEL": "INFO",
                   "AZURE_PACKAGE_LOGGING_LEVEL": "WARNING",
-                  "AZURE_LOGGING_PACKAGES": ""
+                  "AZURE_LOGGING_PACKAGES": "",
+                  "WEBSITES_PORT": "8000"
                 },
                 "applicationInsightResourceId": "[if(parameters('enableMonitoring'), reference('applicationInsights').outputs.resourceId.value, null())]"
               }

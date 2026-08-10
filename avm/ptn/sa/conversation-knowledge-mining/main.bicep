@@ -36,7 +36,7 @@ param location string = resourceGroup().location
   azd: {
     type: 'location'
     usageName: [
-      'OpenAI.GlobalStandard.gpt-4o-mini,150'
+      'OpenAI.GlobalStandard.gpt-5.2,150'
       'OpenAI.GlobalStandard.text-embedding-3-small,80'
     ]
   }
@@ -68,10 +68,10 @@ param cosmosDbReplicaLocation string = 'canadacentral'
 param deploymentType string = 'GlobalStandard'
 
 @description('Optional. Name of the GPT model to deploy.')
-param gptModelName string = 'gpt-4o'
+param gptModelName string = 'gpt-5.2'
 
 @description('Optional. Version of the GPT model to deploy.')
-param gptModelVersion string = '2024-11-20'
+param gptModelVersion string = '2025-12-11'
 
 @description('Optional. Version of the Azure OpenAI API.')
 param azureOpenAIApiVersion string = '2025-01-01-preview'
@@ -150,6 +150,13 @@ param vmSize string = 'Standard_D2s_v5'
 param createdBy string = contains(deployer(), 'userPrincipalName')
   ? split(deployer().userPrincipalName, '@')[0]
   : deployer().objectId
+
+@description('Optional. Principal object to assign application/data-plane roles needed for post-provisioning scripts (e.g. local data seeding). Format: {"id":"<object-id>", "name":"<name-or-upn>", "type":"User|Group|ServicePrincipal"}. Leave id empty to skip granting any additional access.')
+param principal object = {
+  id: '' // Principal ID
+  name: '' // Principal name
+  type: 'User' // Principal type ('User', 'Group', or 'ServicePrincipal')
+}
 
 @maxLength(5)
 @description('Optional. A unique text value for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name.')
@@ -861,43 +868,54 @@ module searchServiceUpdate 'br/public:avm/res/search/search-service:0.12.0' = {
       bypass: 'AzureServices'
       ipRules: []
     }
-    roleAssignments: [
-      {
-        roleDefinitionIdOrName: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
-        principalId: userAssignedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-      }
-      {
-        roleDefinitionIdOrName: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
-        principalId: userAssignedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-      }
-      {
-        roleDefinitionIdOrName: '8ebe5a00-799e-43f5-93ac-243d3dce84a7' //'Search Index Data Contributor'
-        principalId: userAssignedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-      }
-      {
-        roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
-        principalId: userAssignedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-      }
-      {
-        roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
-        principalId: backendUserAssignedIdentity.outputs.principalId
-        principalType: 'ServicePrincipal'
-      }
-      {
-        roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f' // Search Index Data Reader
-        principalId: aiFoundryAiServices.outputs.aiProjectInfo.aiprojectSystemAssignedMIPrincipalId
-        principalType: 'ServicePrincipal'
-      }
-      {
-        roleDefinitionIdOrName: '7ca78c08-252a-4471-8644-bb5ff32d4ba0' // Search Service Contributor
-        principalId: aiFoundryAiServices.outputs.aiProjectInfo.aiprojectSystemAssignedMIPrincipalId
-        principalType: 'ServicePrincipal'
-      }
-    ]
+    roleAssignments: concat(
+      [
+        {
+          roleDefinitionIdOrName: '7ca78c08-252a-4471-8644-bb5ff32d4ba0'
+          principalId: userAssignedIdentity.outputs.principalId
+          principalType: 'ServicePrincipal'
+        }
+        {
+          roleDefinitionIdOrName: '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+          principalId: userAssignedIdentity.outputs.principalId
+          principalType: 'ServicePrincipal'
+        }
+        {
+          roleDefinitionIdOrName: '8ebe5a00-799e-43f5-93ac-243d3dce84a7' //'Search Index Data Contributor'
+          principalId: userAssignedIdentity.outputs.principalId
+          principalType: 'ServicePrincipal'
+        }
+        {
+          roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
+          principalId: userAssignedIdentity.outputs.principalId
+          principalType: 'ServicePrincipal'
+        }
+        {
+          roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f'
+          principalId: backendUserAssignedIdentity.outputs.principalId
+          principalType: 'ServicePrincipal'
+        }
+        {
+          roleDefinitionIdOrName: '1407120a-92aa-4202-b7e9-c0e197c71c8f' // Search Index Data Reader
+          principalId: aiFoundryAiServices.outputs.aiProjectInfo.aiprojectSystemAssignedMIPrincipalId
+          principalType: 'ServicePrincipal'
+        }
+        {
+          roleDefinitionIdOrName: '7ca78c08-252a-4471-8644-bb5ff32d4ba0' // Search Service Contributor
+          principalId: aiFoundryAiServices.outputs.aiProjectInfo.aiprojectSystemAssignedMIPrincipalId
+          principalType: 'ServicePrincipal'
+        }
+      ],
+      !empty(principal.id)
+        ? [
+            {
+              roleDefinitionIdOrName: '8ebe5a00-799e-43f5-93ac-243d3dce84a7' // Search Index Data Contributor for deployer/post-provisioning principal
+              principalId: principal.id
+              principalType: principal.type
+            }
+          ]
+        : []
+    )
     partitionCount: 1
     replicaCount: 3
     sku: 'standard'
@@ -1096,7 +1114,10 @@ module cosmosDb 'br/public:avm/res/document-db/database-account:0.19.0' = {
           'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/*'
           'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers/items/*'
         ]
-        assignments: [{ principalId: backendUserAssignedIdentity.outputs.principalId }]
+        assignments: concat(
+          [{ principalId: backendUserAssignedIdentity.outputs.principalId }],
+          !empty(principal.id) ? [{ principalId: principal.id }] : []
+        )
       }
     ]
     // WAF aligned configuration for Monitoring
@@ -1493,14 +1514,21 @@ module webSiteBackend 'modules/web-sites.bicep' = {
           APP_FRONTEND_HOSTNAME: 'https://app-${solutionSuffix}.azurewebsites.net'
           AI_FOUNDRY_RESOURCE_ID: aiFoundryAiServices.outputs.resourceId
           AZURE_OPENAI_DEPLOYMENT_MODEL: gptModelName
+          // Alias read by infra/scripts/post-provision/create_agent.py (falls back to a hardcoded default model name without it).
+          AZURE_OPENAI_CHAT_DEPLOYMENT: gptModelName
+          // config.py (azure_openai_embedding_deployment) reads this to select the embedding model; without it, it silently falls back to its own hardcoded default.
+          AZURE_OPENAI_EMBEDDING_DEPLOYMENT: embeddingModel
           AZURE_OPENAI_ENDPOINT: 'https://${aiFoundryAiServices.outputs.name}.openai.azure.com/'
           AZURE_OPENAI_API_VERSION: azureOpenAIApiVersion
           AZURE_OPENAI_RESOURCE: aiFoundryAiServices.outputs.name
           // Required by the application's production configuration validation (config.py: azure_content_understanding_endpoint).
           AZURE_CONTENT_UNDERSTANDING_ENDPOINT: aiFoundryAiServices.outputs.endpoints['Content Understanding']
+          AZURE_CONTENT_UNDERSTANDING_API_VERSION: azureContentUnderstandingApiVersion
           AZURE_AI_AGENT_ENDPOINT: aiFoundryAiServices.outputs.aiProjectInfo.apiEndpoint
           AZURE_AI_AGENT_API_VERSION: azureAiAgentApiVersion
           AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME: gptModelName
+          // Alias read by infra/scripts/post-provision/create_agent.py (falls back to a hardcoded default model name without it).
+          AZURE_AI_AGENT_MODEL: gptModelName
           USE_CHAT_HISTORY_ENABLED: 'True'
           AZURE_COSMOSDB_ACCOUNT: cosmosDb.outputs.name
           AZURE_COSMOSDB_CONVERSATIONS_CONTAINER: collectionName
@@ -1511,23 +1539,34 @@ module webSiteBackend 'modules/web-sites.bicep' = {
           SQLDB_USER_MID: backendUserAssignedIdentity.outputs.clientId
           // Required by the application's production configuration validation (config.py: azure_sql_server).
           AZURE_SQL_SERVER: '${sqlDBModule.outputs.name}${environment().suffixes.sqlServerHostname}'
+          // config.py (azure_sql_database) defaults to 'km-db' if unset, which does not exist - would break all SQL data access at runtime.
+          AZURE_SQL_DATABASE: 'sqldb-${solutionSuffix}'
           // Required by the application's production configuration validation (config.py: azure_storage_account).
           AZURE_STORAGE_ACCOUNT: storageAccount.outputs.name
+          // config.py (azure_storage_container) defaults to 'documents' if unset, which does not match the 'data' container actually provisioned.
+          AZURE_STORAGE_CONTAINER: 'data'
           AZURE_AI_SEARCH_ENDPOINT: 'https://${aiSearchName}.search.windows.net'
           AZURE_AI_SEARCH_INDEX: 'call_transcripts_index'
           AZURE_AI_SEARCH_CONNECTION_NAME: aiSearchConnectionName
           // Required by the application's production configuration validation (config.py: azure_search_endpoint).
           AZURE_SEARCH_ENDPOINT: 'https://${aiSearchName}.search.windows.net'
+          // config.py (azure_search_index_name) defaults to 'knowledge-mining-index' if unset, which does not match the actual index name above.
+          AZURE_SEARCH_INDEX_NAME: 'call_transcripts_index'
           USE_AI_PROJECT_CLIENT: 'True'
           DISPLAY_CHART_DEFAULT: 'False'
           APPLICATIONINSIGHTS_CONNECTION_STRING: enableMonitoring ? applicationInsights!.outputs.connectionString : ''
           DUMMY_TEST: 'True'
           SOLUTION_NAME: solutionSuffix
+          // Alias expected by config.py (solution_suffix).
+          SOLUTION_SUFFIX: solutionSuffix
           APP_ENV: 'Prod'
           AZURE_CLIENT_ID: backendUserAssignedIdentity.outputs.clientId
           AZURE_BASIC_LOGGING_LEVEL: 'INFO'
           AZURE_PACKAGE_LOGGING_LEVEL: 'WARNING'
           AZURE_LOGGING_PACKAGES: ''
+          // The backend container (ApiApp.Dockerfile) listens on port 8000; without this, App Service probes the
+          // Linux-container default of port 80 and the site never becomes reachable/healthy.
+          WEBSITES_PORT: '8000'
         }
         // WAF aligned configuration for Monitoring
         applicationInsightResourceId: enableMonitoring ? applicationInsights!.outputs.resourceId : null

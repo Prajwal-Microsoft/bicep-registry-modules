@@ -455,6 +455,7 @@ param vmAdminUsername = 'adminuser'
 | [`gptModelName`](#parameter-gptmodelname) | string | Name of the GPT model to deploy. |
 | [`gptModelVersion`](#parameter-gptmodelversion) | string | Version of the GPT model to deploy. |
 | [`location`](#parameter-location) | string | Azure region for all services. Allowed values: australiaeast, centralus, eastasia, eastus2, japaneast, northeurope, southeastasia, uksouth. Regions are restricted to guarantee compatibility with paired regions and replica locations for data redundancy and failover scenarios based on articles [Azure regions list](https://learn.microsoft.com/azure/reliability/regions-list) and [Azure Database for MySQL Flexible Server - Azure Regions](https://learn.microsoft.com/azure/mysql/flexible-server/overview#azure-regions). |
+| [`principal`](#parameter-principal) | object | Principal object to assign application/data-plane roles needed for post-provisioning scripts (e.g. local data seeding). Format: {"id":"<object-id>", "name":"<name-or-upn>", "type":"User|Group|ServicePrincipal"}. Leave id empty to skip granting any additional access. |
 | [`secondaryLocation`](#parameter-secondarylocation) | string | Secondary location for databases creation (example: eastus2). |
 | [`solutionName`](#parameter-solutionname) | string | A unique prefix for all resources in this deployment. This should be 3-20 characters long. |
 | [`solutionUniqueText`](#parameter-solutionuniquetext) | string | A unique text value for the solution. This is used to ensure resource names are unique for global resources. Defaults to a 5-character substring of the unique string generated from the subscription ID, resource group name, and solution name. |
@@ -680,7 +681,7 @@ Name of the GPT model to deploy.
 
 - Required: No
 - Type: string
-- Default: `'gpt-4o'`
+- Default: `'gpt-5.2'`
 
 ### Parameter: `gptModelVersion`
 
@@ -688,7 +689,7 @@ Version of the GPT model to deploy.
 
 - Required: No
 - Type: string
-- Default: `'2024-11-20'`
+- Default: `'2025-12-11'`
 
 ### Parameter: `location`
 
@@ -697,6 +698,21 @@ Azure region for all services. Allowed values: australiaeast, centralus, eastasi
 - Required: No
 - Type: string
 - Default: `[resourceGroup().location]`
+
+### Parameter: `principal`
+
+Principal object to assign application/data-plane roles needed for post-provisioning scripts (e.g. local data seeding). Format: {"id":"<object-id>", "name":"<name-or-upn>", "type":"User|Group|ServicePrincipal"}. Leave id empty to skip granting any additional access.
+
+- Required: No
+- Type: object
+- Default:
+  ```Bicep
+  {
+      id: ''
+      name: ''
+      type: 'User'
+  }
+  ```
 
 ### Parameter: `secondaryLocation`
 
