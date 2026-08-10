@@ -6,10 +6,10 @@
     "_generator": {
       "name": "bicep",
       "version": "0.44.1.10279",
-      "templateHash": "592428583369531612"
+      "templateHash": "12807488919858179031"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
-    "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, run the post-deployment scripts below (from the [accelerator repository](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator)) to build & push the application container images, grant the API's managed identity access to Azure SQL, and load sample data. These scripts read their configuration from an `azd` environment. Since this module is deployed via Bicep/AVM (not `azd up`), populate a local `azd` environment from just your resource group name first, then run the scripts unmodified - see [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) for what each script does: <ol><li>Clone the accelerator repo: `git clone https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator.git` and `cd` into it, then create a local environment: `azd env new avm-postdeploy`.</li><li>Resolve the resource names from your resource group (`$rg`) with the Azure CLI - ACR (`az acr list -g $rg`), API/frontend App Services (`az webapp list -g $rg`, names prefixed `api-`/`app-`), SQL server/database (`az sql server list -g $rg`, `az sql db list -g $rg --server <server>`), and the backend's identity principal (`az identity list -g $rg`, name prefixed `id-backend-` - this user-assigned identity is what the API uses to authenticate to SQL, exposed as `SQLDB_USER_MID`) - then populate the `azd` environment with `azd env set` for each of `RESOURCE_GROUP_NAME`, `ACR_NAME`, `API_APP_NAME`, `FRONTEND_APP_NAME`, `AZURE_SQL_SERVER`, `AZURE_SQL_DATABASE`, `AZURE_API_PRINCIPAL_ID`, and `SERVICE_BACKEND_URI`.</li><li>Build & push the container images to ACR and point the App Services at them: `./infra/scripts/build/build_and_push_images.ps1`.</li><li>Grant the API's managed identity access to Azure SQL (run as the SQL Microsoft Entra ID admin): `./infra/scripts/post-provision/setup-sql-roles.ps1`.</li><li>Load sample data or connect a data source (interactive menu): `./infra/scripts/post-provision/setup-data.ps1 -AllowDeployedFallback`.</li></ol> |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
+    "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, run the post-deployment scripts below (from the [accelerator repository](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator)) to build & push the application container images, grant the API's managed identity access to Azure SQL, and load sample data - see [Step 5: Post-Deployment Configuration](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/docs/DeploymentGuide.md#step-5-post-deployment-configuration) for what each script does. These scripts run directly against a resource group (no `azd` environment required for this Bicep/AVM deployment path). Replace `<resource-group-name>` below with the name of the resource group this module was deployed into: <ol><li>Clone the accelerator repo and set up a Python virtual environment: `git clone https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator.git`, `cd` into it, then `python -m venv .venv`, `./.venv/Scripts/Activate.ps1`, and `pip install -r infra/scripts/post-provision/requirements.txt`.</li><li>**If `enablePrivateNetworking` = `true` (WAF-aligned deployment) only:** temporarily allow public network access so the scripts below can reach the private data-plane resources: `./infra/scripts/post-provision/manage-network-access.ps1 -Action Enable -ResourceGroupName \"<resource-group-name>\"`.</li><li>Build & push the container images to ACR and point the App Services at them: `./infra/scripts/build/build_and_push_images.ps1 -ResourceGroupName \"<resource-group-name>\"`.</li><li>Grant the API's managed identity access to Azure SQL (run as the SQL Microsoft Entra ID admin): `./infra/scripts/post-provision/setup-sql-roles.ps1 -ResourceGroupName \"<resource-group-name>\"`.</li><li>Load sample data or connect a data source (interactive menu): `./infra/scripts/post-provision/setup-data.ps1 -ResourceGroupName \"<resource-group-name>\"`.</li><li>**If `enablePrivateNetworking` = `true` (WAF-aligned deployment) only:** restore private-only network access: `./infra/scripts/post-provision/manage-network-access.ps1 -Action Disable -ResourceGroupName \"<resource-group-name>\"`.</li></ol> |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
   },
   "parameters": {
     "solutionName": {
@@ -40114,10 +40114,10 @@
         }
       },
       "dependsOn": [
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
-        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageBlob)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageQueue)]",
         "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageDfs)]",
+        "[format('avmPrivateDnsZones[{0}]', variables('dnsZoneIndex').storageFile)]",
         "userAssignedIdentity",
         "virtualNetwork"
       ]
@@ -53392,7 +53392,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.44.1.10279",
-              "templateHash": "2594538164189012241"
+              "templateHash": "3397860811159906901"
             }
           },
           "definitions": {
@@ -53850,6 +53850,17 @@
                 "description": "Optional. ARM-audience AAD token policy status. Keep \"enabled\" for App Service managed-identity ACR pulls."
               }
             },
+            "exportPolicyStatus": {
+              "type": "string",
+              "defaultValue": "enabled",
+              "allowedValues": [
+                "enabled",
+                "disabled"
+              ],
+              "metadata": {
+                "description": "Optional. Export policy status. Keep \"enabled\" so publicNetworkAccess can be re-enabled later without an export-policy conflict."
+              }
+            },
             "roleAssignments": {
               "type": "array",
               "defaultValue": [],
@@ -53918,6 +53929,9 @@
                   },
                   "azureADAuthenticationAsArmPolicyStatus": {
                     "value": "[parameters('azureADAuthenticationAsArmPolicyStatus')]"
+                  },
+                  "exportPolicyStatus": {
+                    "value": "[parameters('exportPolicyStatus')]"
                   },
                   "roleAssignments": {
                     "value": "[parameters('roleAssignments')]"
@@ -58543,11 +58557,13 @@
                   "AGENT_NAME_CONVERSATION": "",
                   "AGENT_NAME_TITLE": "",
                   "API_APP_NAME": "[format('api-{0}', variables('solutionSuffix'))]",
+                  "APP_FRONTEND_HOSTNAME": "[format('https://app-{0}.azurewebsites.net', variables('solutionSuffix'))]",
                   "AI_FOUNDRY_RESOURCE_ID": "[reference('aiFoundryAiServices').outputs.resourceId.value]",
                   "AZURE_OPENAI_DEPLOYMENT_MODEL": "[parameters('gptModelName')]",
                   "AZURE_OPENAI_ENDPOINT": "[format('https://{0}.openai.azure.com/', reference('aiFoundryAiServices').outputs.name.value)]",
                   "AZURE_OPENAI_API_VERSION": "[parameters('azureOpenAIApiVersion')]",
                   "AZURE_OPENAI_RESOURCE": "[reference('aiFoundryAiServices').outputs.name.value]",
+                  "AZURE_CONTENT_UNDERSTANDING_ENDPOINT": "[reference('aiFoundryAiServices').outputs.endpoints.value['Content Understanding']]",
                   "AZURE_AI_AGENT_ENDPOINT": "[reference('aiFoundryAiServices').outputs.aiProjectInfo.value.apiEndpoint]",
                   "AZURE_AI_AGENT_API_VERSION": "[parameters('azureAiAgentApiVersion')]",
                   "AZURE_AI_AGENT_MODEL_DEPLOYMENT_NAME": "[parameters('gptModelName')]",
@@ -58559,9 +58575,12 @@
                   "SQLDB_DATABASE": "[format('sqldb-{0}', variables('solutionSuffix'))]",
                   "SQLDB_SERVER": "[format('{0}{1}', reference('sqlDBModule').outputs.name.value, environment().suffixes.sqlServerHostname)]",
                   "SQLDB_USER_MID": "[reference('backendUserAssignedIdentity').outputs.clientId.value]",
+                  "AZURE_SQL_SERVER": "[format('{0}{1}', reference('sqlDBModule').outputs.name.value, environment().suffixes.sqlServerHostname)]",
+                  "AZURE_STORAGE_ACCOUNT": "[reference('storageAccount').outputs.name.value]",
                   "AZURE_AI_SEARCH_ENDPOINT": "[format('https://{0}.search.windows.net', variables('aiSearchName'))]",
                   "AZURE_AI_SEARCH_INDEX": "call_transcripts_index",
                   "AZURE_AI_SEARCH_CONNECTION_NAME": "[variables('aiSearchConnectionName')]",
+                  "AZURE_SEARCH_ENDPOINT": "[format('https://{0}.search.windows.net', variables('aiSearchName'))]",
                   "USE_AI_PROJECT_CLIENT": "True",
                   "DISPLAY_CHART_DEFAULT": "False",
                   "APPLICATIONINSIGHTS_CONNECTION_STRING": "[if(parameters('enableMonitoring'), reference('applicationInsights').outputs.connectionString.value, '')]",
@@ -60499,6 +60518,7 @@
         "cosmosDb",
         "logAnalyticsWorkspace",
         "sqlDBModule",
+        "storageAccount",
         "virtualNetwork",
         "webServerFarm"
       ]

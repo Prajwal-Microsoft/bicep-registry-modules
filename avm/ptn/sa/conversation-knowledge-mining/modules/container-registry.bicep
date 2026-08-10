@@ -44,6 +44,16 @@ param zoneRedundancy string = 'Disabled'
 @allowed(['enabled', 'disabled'])
 param azureADAuthenticationAsArmPolicyStatus string = 'enabled'
 
+// The underlying AVM module only sets the exportPolicy property when acrSku is 'Premium' (which this
+// module always uses when enablePrivateNetworking is true), and defaults exportPolicyStatus to 'disabled'
+// in that case. Left at that default, the registry permanently locks itself out of re-enabling
+// publicNetworkAccess later (ACR returns BadRequest: "Enabling public network access is not supported
+// because the registry has exports disabled"). Default to 'enabled' so toggling publicNetworkAccess
+// back and forth (e.g. for temporary debugging access) keeps working.
+@description('Optional. Export policy status. Keep "enabled" so publicNetworkAccess can be re-enabled later without an export-policy conflict.')
+@allowed(['enabled', 'disabled'])
+param exportPolicyStatus string = 'enabled'
+
 @description('Optional. Role assignments to apply to the registry (e.g. AcrPull for consuming identities).')
 param roleAssignments array = []
 
@@ -73,6 +83,7 @@ module containerRegistry 'br/public:avm/res/container-registry/registry:0.12.1' 
     publicNetworkAccess: publicNetworkAccess
     zoneRedundancy: zoneRedundancy
     azureADAuthenticationAsArmPolicyStatus: azureADAuthenticationAsArmPolicyStatus
+    exportPolicyStatus: exportPolicyStatus
     roleAssignments: roleAssignments
     diagnosticSettings: diagnosticSettings
     privateEndpoints: privateEndpoints
