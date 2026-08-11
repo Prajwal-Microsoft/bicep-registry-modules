@@ -2,6 +2,24 @@
 
 The latest version of the changelog can be found [here](https://github.com/Azure/bicep-registry-modules/blob/main/avm/ptn/sa/content-processing/CHANGELOG.md).
 
+## 0.3.0
+
+### Changes
+
+- Removed the redundant Content Understanding AI Services account; Content Understanding now uses the primary AI Services account.
+- Granted missing AI Services role assignments to the app and Workflow container app identities.
+- Added missing `APP_REDIRECT_URL` and `APP_POST_REDIRECT_URL` app settings to the Web container app.
+- Fixed a double-slash bug in `APP_WEB_AUTHORITY` that caused a blank page after sign-in.
+- Moved AVM post-deployment documentation into the module (`POST-DEPLOYMENT.md`), making it self-contained.
+- Added a missing Workflow container app update module, App Configuration role assignments/keys, and Storage role assignments.
+- Added missing `ingressTargetPort=3000` for the Web container app.
+- Added outputs `containerWorkflowAppName` and `containerWorkflowAppFqdn`.
+- Updated default GPT model from `gpt-4o` (`2024-08-06`) to `gpt-5.1` (`2025-11-13`).
+
+### Breaking Changes
+
+- None
+
 ## 0.2.0
 
 ### Changes
