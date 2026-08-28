@@ -1,9 +1,17 @@
-#  `[Sa/ConversationKnowledgeMining]`
+# Conversation Knowledge Mining Solution Accelerator `[Sa/ConversationKnowledgeMining]`
+
+This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).
+
+|**Post-Deployment Step** |
+|-------------|
+| After completing the deployment, follow the steps in the [Post-Deployment Guide](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/documents/AVMPostDeploymentGuide.md) to configure and verify your environment. |
+
+> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.
 
 
 You can reference the module as follows:
 ```bicep
-module  'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>' = {
+module conversationKnowledgeMining 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>' = {
   params: { (...) }
 }
 ```
@@ -155,14 +163,13 @@ The following section provides usage examples for the module, which were used to
 
 >**Note**: To reference the module, please use the following syntax `br/public:avm/ptn/sa/conversation-knowledge-mining:<version>`.
 
-- [Using only defaults](#example-1-using-only-defaults)
-- [WAF-aligned configuration with default parameter values](#example-2-waf-aligned-configuration-with-default-parameter-values)
+- [Sandbox configuration with default parameter values](#example-1-sandbox-configuration-with-default-parameter-values)
 
-### Example 1: _Using only defaults_
+### Example 1: _Sandbox configuration with default parameter values_
 
-This instance deploys the module with the minimum set of required parameters.
+This instance deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) using only the required parameters. Optional parameters will take the default values, which are designed for Sandbox environments.
 
-You can find the full example and the setup of its dependencies in the deployment test folder path [/tests/e2e/defaults]
+You can find the full example and the setup of its dependencies in the deployment test folder path [/tests/e2e/sandbox]
 
 
 <details>
@@ -223,111 +230,6 @@ param azureAiServiceLocation = '<azureAiServiceLocation>'
 // Non-required parameters
 param location = '<location>'
 param solutionName = '<solutionName>'
-```
-
-</details>
-<p>
-
-### Example 2: _WAF-aligned configuration with default parameter values_
-
-This instance deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator) using only the required parameters. Optional parameters will take the default values, which are designed for WAF-aligned environments.
-
-You can find the full example and the setup of its dependencies in the deployment test folder path [/tests/e2e/waf-aligned]
-
-
-<details>
-
-<summary>via Bicep module</summary>
-
-```bicep
-module conversationKnowledgeMining 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>' = {
-  params: {
-    // Required parameters
-    azureAiServiceLocation: '<azureAiServiceLocation>'
-    // Non-required parameters
-    enableMonitoring: true
-    enablePrivateNetworking: true
-    enableRedundancy: true
-    enableScalability: true
-    enableTelemetry: true
-    location: '<location>'
-    solutionName: '<solutionName>'
-    vmAdminPassword: '<vmAdminPassword>'
-    vmAdminUsername: 'adminuser'
-  }
-}
-```
-
-</details>
-<p>
-
-<details>
-
-<summary>via JSON parameters file</summary>
-
-```json
-{
-  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
-  "contentVersion": "1.0.0.0",
-  "parameters": {
-    // Required parameters
-    "azureAiServiceLocation": {
-      "value": "<azureAiServiceLocation>"
-    },
-    // Non-required parameters
-    "enableMonitoring": {
-      "value": true
-    },
-    "enablePrivateNetworking": {
-      "value": true
-    },
-    "enableRedundancy": {
-      "value": true
-    },
-    "enableScalability": {
-      "value": true
-    },
-    "enableTelemetry": {
-      "value": true
-    },
-    "location": {
-      "value": "<location>"
-    },
-    "solutionName": {
-      "value": "<solutionName>"
-    },
-    "vmAdminPassword": {
-      "value": "<vmAdminPassword>"
-    },
-    "vmAdminUsername": {
-      "value": "adminuser"
-    }
-  }
-}
-```
-
-</details>
-<p>
-
-<details>
-
-<summary>via Bicep parameters file</summary>
-
-```bicep-params
-using 'br/public:avm/ptn/sa/conversation-knowledge-mining:<version>'
-
-// Required parameters
-param azureAiServiceLocation = '<azureAiServiceLocation>'
-// Non-required parameters
-param enableMonitoring = true
-param enablePrivateNetworking = true
-param enableRedundancy = true
-param enableScalability = true
-param enableTelemetry = true
-param location = '<location>'
-param solutionName = '<solutionName>'
-param vmAdminPassword = '<vmAdminPassword>'
-param vmAdminUsername = 'adminuser'
 ```
 
 </details>
@@ -511,7 +413,7 @@ Capacity of the embedding model deployment.
 
 - Required: No
 - Type: int
-- Default: `80`
+- Default: `10`
 - MinValue: 10
 
 ### Parameter: `embeddingModel`
@@ -606,7 +508,7 @@ Capacity of the GPT deployment (TPM in thousands).
 
 - Required: No
 - Type: int
-- Default: `150`
+- Default: `10`
 - MinValue: 10
 
 ### Parameter: `gptModelName`
@@ -615,7 +517,7 @@ Name of the GPT model to deploy.
 
 - Required: No
 - Type: string
-- Default: `'gpt-5.2'`
+- Default: `'gpt-4.1-mini'`
 
 ### Parameter: `gptModelVersion`
 
@@ -623,7 +525,7 @@ Version of the GPT model to deploy.
 
 - Required: No
 - Type: string
-- Default: `'2025-12-11'`
+- Default: `'2025-04-14'`
 
 ### Parameter: `kind`
 
@@ -724,7 +626,6 @@ This section gives you an overview of all local-referenced module files (i.e., o
 | :-- | :-- |
 | `br/public:avm/res/compute/proximity-placement-group:0.4.1` | Remote reference |
 | `br/public:avm/res/compute/virtual-machine:0.22.0` | Remote reference |
-| `br/public:avm/res/container-registry/registry:0.12.1` | Remote reference |
 | `br/public:avm/res/document-db/database-account:0.19.0` | Remote reference |
 | `br/public:avm/res/insights/component:0.7.1` | Remote reference |
 | `br/public:avm/res/insights/data-collection-rule:0.11.0` | Remote reference |
@@ -740,7 +641,6 @@ This section gives you an overview of all local-referenced module files (i.e., o
 | `br/public:avm/res/sql/server:0.21.1` | Remote reference |
 | `br/public:avm/res/storage/storage-account:0.32.0` | Remote reference |
 | `br/public:avm/res/web/serverfarm:0.7.0` | Remote reference |
-| `br/public:avm/utl/types/avm-common-types:0.5.1` | Remote reference |
 | `br/public:avm/utl/types/avm-common-types:0.7.0` | Remote reference |
 
 ## Data Collection
