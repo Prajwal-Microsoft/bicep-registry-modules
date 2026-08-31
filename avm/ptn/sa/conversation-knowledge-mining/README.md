@@ -224,7 +224,6 @@ param solutionName = '<solutionName>'
 | [`azureAdTenantId`](#parameter-azureadtenantid) | string | Azure AD tenant ID for authentication. |
 | [`containerRegistryName`](#parameter-containerregistryname) | string | Name of the Azure Container Registry. Leave empty to auto-generate a globally unique name (cr<suffix>). |
 | [`deployCosmos`](#parameter-deploycosmos) | bool | Set to true to also deploy Cosmos DB (not required — SQL is the primary database). |
-| [`deployingUserPrincipalType`](#parameter-deployinguserprincipaltype) | string | Principal type of the deploying user. |
 | [`deploymentType`](#parameter-deploymenttype) | string | GPT model deployment type. |
 | [`embeddingDeploymentCapacity`](#parameter-embeddingdeploymentcapacity) | int | Capacity of the embedding model deployment. |
 | [`embeddingModel`](#parameter-embeddingmodel) | string | Name of the embedding model to deploy. |
@@ -324,21 +323,6 @@ Set to true to also deploy Cosmos DB (not required — SQL is the primary databa
 - Required: No
 - Type: bool
 - Default: `False`
-
-### Parameter: `deployingUserPrincipalType`
-
-Principal type of the deploying user.
-
-- Required: No
-- Type: string
-- Default: `'User'`
-- Allowed:
-  ```Bicep
-  [
-    'ServicePrincipal'
-    'User'
-  ]
-  ```
 
 ### Parameter: `deploymentType`
 

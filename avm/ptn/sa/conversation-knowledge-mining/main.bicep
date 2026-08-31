@@ -137,14 +137,6 @@ param existingLogAnalyticsWorkspaceId string = ''
 param existingFoundryProjectResourceId string = ''
 
 // ============================================================================
-// Parameters — Identity
-// ============================================================================
-
-@allowed(['User', 'ServicePrincipal'])
-@description('Optional. Principal type of the deploying user.')
-param deployingUserPrincipalType string = 'User'
-
-// ============================================================================
 // Variables
 // ============================================================================
 
@@ -161,6 +153,8 @@ var solutionSuffix = toLower(trim(replace(
 var containerRegistryResourceName = !empty(containerRegistryName) ? containerRegistryName : 'acrkm${solutionSuffix}'
 var deployerInfo = deployer()
 var deployingUserPrincipalId = deployerInfo.objectId
+// Service principals (e.g. CI) have no userPrincipalName; users do.
+var deployingUserPrincipalType = contains(deployerInfo, 'userPrincipalName') ? 'User' : 'ServicePrincipal'
 var createdBy = contains(deployerInfo, 'userPrincipalName')
   ? split(deployerInfo.userPrincipalName, '@')[0]
   : deployerInfo.objectId
@@ -508,6 +502,7 @@ module sqlDBModule './modules/data/sql-database.bicep' = {
     tags: tags
     enableTelemetry: enableTelemetry
     deployerPrincipalId: deployingUserPrincipalId
+    deployerPrincipalType: deployingUserPrincipalType == 'User' ? 'User' : 'Application'
     publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
     privateEndpoints: []
   }

@@ -26,6 +26,10 @@ param enableTelemetry bool = true
 @description('Principal ID of the deployer for admin access.')
 param deployerPrincipalId string
 
+@allowed(['Application', 'Group', 'User'])
+@description('Principal type of the deployer for the SQL AD admin.')
+param deployerPrincipalType string = 'User'
+
 @description('SKU name for the database.')
 param skuName string = 'GP_S_Gen5'
 
@@ -72,7 +76,7 @@ module sqlServer 'br/public:avm/res/sql/server:0.21.1' = {
     administrators: {
       azureADOnlyAuthentication: true
       login: deployerPrincipalId
-      principalType: 'User'
+      principalType: deployerPrincipalType
       sid: deployerPrincipalId
       tenantId: subscription().tenantId
     }
@@ -92,18 +96,20 @@ module sqlServer 'br/public:avm/res/sql/server:0.21.1' = {
         }
       }
     ]
-    firewallRules: publicNetworkAccess == 'Enabled' ? [
-      {
-        name: 'AllowSpecificRange'
-        startIpAddress: '0.0.0.0'
-        endIpAddress: '255.255.255.255'
-      }
-      {
-        name: 'AllowAllAzureServicesAndResourcesWithinAzureIps'
-        startIpAddress: '0.0.0.0'
-        endIpAddress: '0.0.0.0'
-      }
-    ] : []
+    firewallRules: publicNetworkAccess == 'Enabled'
+      ? [
+          {
+            name: 'AllowSpecificRange'
+            startIpAddress: '0.0.0.0'
+            endIpAddress: '255.255.255.255'
+          }
+          {
+            name: 'AllowAllAzureServicesAndResourcesWithinAzureIps'
+            startIpAddress: '0.0.0.0'
+            endIpAddress: '0.0.0.0'
+          }
+        ]
+      : []
     privateEndpoints: privateEndpoints
   }
 }

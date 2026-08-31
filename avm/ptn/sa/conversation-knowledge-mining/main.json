@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.46.1.21595",
-      "templateHash": "10994097517431729704"
+      "templateHash": "2606392442691189505"
     },
     "name": "Conversation Knowledge Mining Solution Accelerator",
     "description": "This module deploys the [Conversation Knowledge Mining Solution Accelerator](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator).\n\n|**Post-Deployment Step** |\n|-------------|\n| After completing the deployment, follow the steps in the [Post-Deployment Guide](https://github.com/microsoft/Conversation-Knowledge-Mining-Solution-Accelerator/blob/main/documents/AVMPostDeploymentGuide.md) to configure and verify your environment. |\n\n> **Note:** This module is not intended for broad, generic use, as it was designed by the Commercial Solution Areas CTO team, as a Microsoft Solution Accelerator. Feature requests and bug fix requests are welcome if they support the needs of this organization but may not be incorporated if they aim to make this module more generic than what it needs to be for its primary use case. This module will likely be updated to leverage AVM resource modules in the future. This may result in breaking changes in upcoming versions when these features are implemented.\n"
@@ -226,17 +226,6 @@
       "metadata": {
         "description": "Optional. Resource ID of an existing AI Foundry project (empty = create new)."
       }
-    },
-    "deployingUserPrincipalType": {
-      "type": "string",
-      "defaultValue": "User",
-      "allowedValues": [
-        "User",
-        "ServicePrincipal"
-      ],
-      "metadata": {
-        "description": "Optional. Principal type of the deploying user."
-      }
     }
   },
   "variables": {
@@ -244,6 +233,7 @@
     "containerRegistryResourceName": "[if(not(empty(parameters('containerRegistryName'))), parameters('containerRegistryName'), format('acrkm{0}', variables('solutionSuffix')))]",
     "deployerInfo": "[deployer()]",
     "deployingUserPrincipalId": "[variables('deployerInfo').objectId]",
+    "deployingUserPrincipalType": "[if(contains(variables('deployerInfo'), 'userPrincipalName'), 'User', 'ServicePrincipal')]",
     "createdBy": "[if(contains(variables('deployerInfo'), 'userPrincipalName'), split(variables('deployerInfo').userPrincipalName, '@')[0], variables('deployerInfo').objectId)]",
     "useExistingAIProject": "[not(empty(parameters('existingFoundryProjectResourceId')))]",
     "existingTags": "[coalesce(tryGet(resourceGroup(), 'tags'), createObject())]",
@@ -4708,12 +4698,12 @@
               {
                 "roleDefinitionIdOrName": "a97b65f3-24c7-4388-baec-2e87135dc908",
                 "principalId": "[variables('deployingUserPrincipalId')]",
-                "principalType": "[parameters('deployingUserPrincipalType')]"
+                "principalType": "[variables('deployingUserPrincipalType')]"
               },
               {
                 "roleDefinitionIdOrName": "53ca6127-db72-4b80-b1b0-d745d6d5456d",
                 "principalId": "[variables('deployingUserPrincipalId')]",
-                "principalType": "[parameters('deployingUserPrincipalType')]"
+                "principalType": "[variables('deployingUserPrincipalType')]"
               }
             ]
           }
@@ -7802,12 +7792,12 @@
               {
                 "roleDefinitionIdOrName": "8ebe5a00-799e-43f5-93ac-243d3dce84a7",
                 "principalId": "[variables('deployingUserPrincipalId')]",
-                "principalType": "[parameters('deployingUserPrincipalType')]"
+                "principalType": "[variables('deployingUserPrincipalType')]"
               },
               {
                 "roleDefinitionIdOrName": "7ca78c08-252a-4471-8644-bb5ff32d4ba0",
                 "principalId": "[variables('deployingUserPrincipalId')]",
-                "principalType": "[parameters('deployingUserPrincipalType')]"
+                "principalType": "[variables('deployingUserPrincipalType')]"
               }
             ]
           },
@@ -10511,7 +10501,7 @@
               {
                 "roleDefinitionIdOrName": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
                 "principalId": "[variables('deployingUserPrincipalId')]",
-                "principalType": "[parameters('deployingUserPrincipalType')]"
+                "principalType": "[variables('deployingUserPrincipalType')]"
               }
             ]
           },
@@ -25852,6 +25842,7 @@
           "deployerPrincipalId": {
             "value": "[variables('deployingUserPrincipalId')]"
           },
+          "deployerPrincipalType": "[if(equals(variables('deployingUserPrincipalType'), 'User'), createObject('value', 'User'), createObject('value', 'Application'))]",
           "publicNetworkAccess": "[if(parameters('enablePrivateNetworking'), createObject('value', 'Disabled'), createObject('value', 'Enabled'))]",
           "privateEndpoints": {
             "value": []
@@ -25865,7 +25856,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.46.1.21595",
-              "templateHash": "7285153746042924854"
+              "templateHash": "16648191654560524555"
             }
           },
           "definitions": {
@@ -26273,6 +26264,18 @@
                 "description": "Principal ID of the deployer for admin access."
               }
             },
+            "deployerPrincipalType": {
+              "type": "string",
+              "defaultValue": "User",
+              "allowedValues": [
+                "Application",
+                "Group",
+                "User"
+              ],
+              "metadata": {
+                "description": "Principal type of the deployer for the SQL AD admin."
+              }
+            },
             "skuName": {
               "type": "string",
               "defaultValue": "GP_S_Gen5",
@@ -26381,7 +26384,7 @@
                     "value": {
                       "azureADOnlyAuthentication": true,
                       "login": "[parameters('deployerPrincipalId')]",
-                      "principalType": "User",
+                      "principalType": "[parameters('deployerPrincipalType')]",
                       "sid": "[parameters('deployerPrincipalId')]",
                       "tenantId": "[subscription().tenantId]"
                     }
@@ -33850,7 +33853,7 @@
               "[variables('deployingUserPrincipalId')]"
             ]
           },
-          "acrPushPrincipalType": "[if(equals(parameters('deployingUserPrincipalType'), 'User'), createObject('value', 'User'), createObject('value', 'ServicePrincipal'))]",
+          "acrPushPrincipalType": "[if(equals(variables('deployingUserPrincipalType'), 'User'), createObject('value', 'User'), createObject('value', 'ServicePrincipal'))]",
           "publicNetworkAccess": "[if(parameters('enablePrivateNetworking'), createObject('value', 'Disabled'), createObject('value', 'Enabled'))]",
           "networkRuleSetDefaultAction": "[if(parameters('enablePrivateNetworking'), createObject('value', 'Deny'), createObject('value', 'Allow'))]",
           "privateEndpoints": {
@@ -54695,8 +54698,8 @@
         "[resourceId('Microsoft.Resources/deployments', take(format('module.ai-foundry-project.{0}', parameters('solutionName')), 64))]",
         "[resourceId('Microsoft.Resources/deployments', take(format('module.ai-search.{0}', parameters('solutionName')), 64))]",
         "[resourceId('Microsoft.Resources/deployments', take(format('module.app-service-{0}.{1}', variables('appServiceDeployments')[0].nameSuffix, parameters('solutionName')), 64))]",
-        "[resourceId('Microsoft.Resources/deployments', take(format('module.app-service-{0}.{1}', variables('appServiceDeployments')[0].nameSuffix, parameters('solutionName')), 64))]",
         "[resourceId('Microsoft.Resources/deployments', take(format('module.app-service-{0}.{1}', variables('appServiceDeployments')[1].nameSuffix, parameters('solutionName')), 64))]",
+        "[resourceId('Microsoft.Resources/deployments', take(format('module.app-service-{0}.{1}', variables('appServiceDeployments')[0].nameSuffix, parameters('solutionName')), 64))]",
         "[resourceId('Microsoft.Resources/deployments', take(format('module.container-registry.{0}', parameters('solutionName')), 64))]",
         "[resourceId('Microsoft.Resources/deployments', take(format('module.cosmos-db-nosql.{0}', parameters('solutionName')), 64))]",
         "[extensionResourceId(format('/subscriptions/{0}/resourceGroups/{1}', variables('aiFoundrySubscriptionId'), variables('aiFoundryResourceGroupName')), 'Microsoft.Resources/deployments', take(format('module.existing-project-setup.{0}', parameters('solutionName')), 64))]",
