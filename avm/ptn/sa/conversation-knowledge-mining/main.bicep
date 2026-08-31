@@ -209,36 +209,6 @@ var cosmosDbHaLocation = cosmosDbHaRegionPairs[location]
 // ========== WAF: Diagnostic settings helper — reused across modules ========== //
 var monitoringDiagnosticSettings = enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : []
 
-// ========== WAF: Private DNS zones for private endpoints ========== //
-var privateDnsZones = [
-  'privatelink.cognitiveservices.azure.com'
-  'privatelink.openai.azure.com'
-  'privatelink.services.ai.azure.com'
-  'privatelink.blob.${environment().suffixes.storage}'
-  'privatelink.queue.${environment().suffixes.storage}'
-  'privatelink.file.${environment().suffixes.storage}'
-  'privatelink.dfs.${environment().suffixes.storage}'
-  'privatelink.documents.azure.com'
-  'privatelink${environment().suffixes.sqlServerHostname}'
-  'privatelink.search.windows.net'
-  'privatelink.azurewebsites.net'
-  'privatelink.azurecr.io'
-]
-var dnsZoneIndex = {
-  cognitiveServices: 0
-  openAI: 1
-  aiServices: 2
-  storageBlob: 3
-  storageQueue: 4
-  storageFile: 5
-  storageDfs: 6
-  cosmosDB: 7
-  sqlServer: 8
-  search: 9
-  webApp: 10
-  containerRegistry: 11
-}
-
 // ========== Model deployments configuration ========== //
 var aiModelDeployments = [
   {
@@ -334,42 +304,6 @@ module app_insights './modules/monitoring/app-insights.bicep' = if (enableMonito
     disableIpMasking: false
   }
 }
-
-// ============================================================================
-// Module: Networking (WAF — conditional on enablePrivateNetworking)
-// ============================================================================
-
-module virtualNetwork './modules/networking/virtual-network.bicep' = if (enablePrivateNetworking) {
-  name: take('module.virtual-network.${solutionName}', 64)
-  params: {
-    solutionName: solutionSuffix
-    location: location
-    tags: tags
-    enableTelemetry: enableTelemetry
-    addressPrefixes: ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
-    logAnalyticsWorkspaceId: logAnalyticsWorkspaceResourceId
-    resourceSuffix: solutionSuffix
-  }
-}
-
-// ========== Private DNS Zones — one per service, linked to VNet ========== //
-@batchSize(5)
-module privateDnsZoneDeployments './modules/networking/private-dns-zone.bicep' = [
-  for (zone, i) in privateDnsZones: if (enablePrivateNetworking) {
-    name: take('module.private-dns-zone.${split(zone, '.')[1]}.${solutionName}', 64)
-    params: {
-      name: zone
-      tags: tags
-      enableTelemetry: enableTelemetry
-      virtualNetworkLinks: [
-        {
-          name: take('vnetlink-${virtualNetwork!.outputs.name}-${split(zone, '.')[1]}', 80)
-          virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
-        }
-      ]
-    }
-  }
-]
 
 // ============================================================================
 // Module: AI Services (conditional — skip if using existing project)
@@ -559,21 +493,7 @@ module cosmosDBModule './modules/data/cosmos-db-nosql.bicep' = if (deployCosmos)
     zoneRedundant: enableRedundancy
     enableAutomaticFailover: enableRedundancy
     haLocation: cosmosDbHaLocation
-    privateEndpoints: enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-cosmos-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-cosmos-${solutionSuffix}'
-            service: 'Sql'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.cosmosDB]!.outputs.resourceId }
-              ]
-            }
-          }
-        ]
-      : []
+    privateEndpoints: []
   }
 }
 
@@ -589,21 +509,7 @@ module sqlDBModule './modules/data/sql-database.bicep' = {
     enableTelemetry: enableTelemetry
     deployerPrincipalId: deployingUserPrincipalId
     publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
-    privateEndpoints: enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-sql-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-sql-${solutionSuffix}'
-            service: 'sqlServer'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.sqlServer]!.outputs.resourceId }
-              ]
-            }
-          }
-        ]
-      : []
+    privateEndpoints: []
   }
 }
 
@@ -643,23 +549,7 @@ module container_registry './modules/compute/container-registry.bicep' = {
     acrPushPrincipalType: deployingUserPrincipalType == 'User' ? 'User' : 'ServicePrincipal'
     publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
     networkRuleSetDefaultAction: enablePrivateNetworking ? 'Deny' : 'Allow'
-    privateEndpoints: enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-${containerRegistryResourceName}'
-            customNetworkInterfaceName: 'nic-${containerRegistryResourceName}'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            service: 'registry'
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                {
-                  privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.containerRegistry]!.outputs.resourceId
-                }
-              ]
-            }
-          }
-        ]
-      : []
+    privateEndpoints: []
   }
 }
 
@@ -720,26 +610,12 @@ module app_services './modules/compute/app-service.bicep' = [
       serverFarmResourceId: hostingplan!.outputs.resourceId
       kind: kind
       linuxFxVersion: placeholderImageName
-      virtualNetworkSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : ''
+      virtualNetworkSubnetId: ''
       publicNetworkAccess: config.nameSuffix == 'api' ? (enablePrivateNetworking ? 'Disabled' : 'Enabled') : 'Enabled'
       vnetRouteAllEnabled: enablePrivateNetworking ? true : false
       imagePullTraffic: enablePrivateNetworking ? true : false
       contentShareTraffic: enablePrivateNetworking ? true : false
-      privateEndpoints: (config.nameSuffix == 'api' && enablePrivateNetworking)
-        ? [
-            {
-              name: 'pep-api-${solutionSuffix}'
-              customNetworkInterfaceName: 'nic-api-${solutionSuffix}'
-              subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-              service: 'sites'
-              privateDnsZoneGroup: {
-                privateDnsZoneGroupConfigs: [
-                  { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.webApp]!.outputs.resourceId }
-                ]
-              }
-            }
-          ]
-        : []
+      privateEndpoints: []
       diagnosticSettings: monitoringDiagnosticSettings
       managedIdentities: { systemAssigned: true }
       acrUseManagedIdentityCreds: true
