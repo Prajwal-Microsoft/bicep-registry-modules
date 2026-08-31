@@ -69,21 +69,6 @@ param enableScalability bool = false
 @description('Optional. Enable redundancy for applicable resources, aligned with the Well Architected Framework recommendations. Defaults to false.')
 param enableRedundancy bool = false
 
-// ============================================================================
-// Parameters — VM (applicable when enablePrivateNetworking = true)
-// ============================================================================
-
-@secure()
-@description('Optional. The user name for the administrator account of the virtual machine. Required by Azure at provisioning time but not used for login when Entra ID is enabled.')
-param vmAdminUsername string?
-
-@secure()
-@description('Optional. The password for the administrator account of the virtual machine. Auto-generated if not provided. Not used for login when Entra ID is enabled.')
-param vmAdminPassword string?
-
-@description('Optional. The size of the virtual machine. Defaults to Standard_D2s_v5.')
-param vmSize string = 'Standard_D2s_v5'
-
 @description('Optional. Set to true to also deploy Cosmos DB (not required — SQL is the primary database).')
 param deployCosmos bool = false
 
@@ -119,18 +104,6 @@ param embeddingDeploymentCapacity int = 10
 
 @description('Optional. Name of the Azure Container Registry. Leave empty to auto-generate a globally unique name (cr<suffix>).')
 param containerRegistryName string = ''
-
-@description('Optional. Backend container image name.')
-param backendContainerImageName string = 'km-api'
-
-@description('Optional. Backend container image tag.')
-param backendContainerImageTag string = 'latest'
-
-@description('Optional. Frontend container image name.')
-param frontendContainerImageName string = 'km-app'
-
-@description('Optional. Frontend container image tag.')
-param frontendContainerImageTag string = 'latest'
 
 @allowed(['F1', 'D1', 'B1', 'B2', 'B3', 'S1', 'S2', 'S3', 'P1', 'P2', 'P3', 'P1v3', 'P1v4'])
 @description('Optional. App Service Plan SKU.')
@@ -347,9 +320,6 @@ module log_analytics './modules/monitoring/log-analytics.bicep' = if (enableMoni
 var logAnalyticsWorkspaceResourceId = useExistingLogAnalytics
   ? existingLogAnalyticsWorkspace.id
   : (enableMonitoring ? log_analytics!.outputs.resourceId : '')
-var logAnalyticsWorkspaceName = useExistingLogAnalytics
-  ? split(existingLogAnalyticsWorkspaceId, '/')[8]
-  : (enableMonitoring ? log_analytics!.outputs.name : '')
 
 // ========== App Insights module ========== //
 module app_insights './modules/monitoring/app-insights.bicep' = if (enableMonitoring) {
@@ -379,101 +349,6 @@ module virtualNetwork './modules/networking/virtual-network.bicep' = if (enableP
     addressPrefixes: ['10.0.0.0/20'] // 4096 addresses (enough for 8 /23 subnets or 16 /24)
     logAnalyticsWorkspaceId: logAnalyticsWorkspaceResourceId
     resourceSuffix: solutionSuffix
-  }
-}
-
-// ========== Bastion Host — secure access to jumpbox VM ========== //
-module bastionHost './modules/networking/bastion-host.bicep' = if (enablePrivateNetworking) {
-  name: take('module.bastion-host.${solutionName}', 64)
-  params: {
-    solutionName: solutionSuffix
-    location: location
-    tags: tags
-    enableTelemetry: enableTelemetry
-    virtualNetworkResourceId: virtualNetwork!.outputs.resourceId
-    publicIPDiagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
-    diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
-  }
-}
-
-// ========== WAF: Maintenance Configuration for VM patching ========== //
-module maintenanceConfiguration './modules/compute/maintenance-configuration.bicep' = if (enablePrivateNetworking) {
-  name: take('module.maintenance-configuration.${solutionName}', 64)
-  params: {
-    solutionName: solutionSuffix
-    location: location
-    tags: tags
-    enableTelemetry: enableTelemetry
-  }
-}
-
-// ========== WAF: Data Collection Rules for VM monitoring ========== //
-var dataCollectionRulesLocation = useExistingLogAnalytics
-  ? existingLogAnalyticsWorkspace!.location
-  : (enableMonitoring ? log_analytics!.outputs.location : location)
-module windowsVmDataCollectionRules './modules/monitoring/data-collection-rule.bicep' = if (enablePrivateNetworking && enableMonitoring) {
-  name: take('module.data-collection-rule.${solutionName}', 64)
-  params: {
-    solutionName: solutionSuffix
-    location: dataCollectionRulesLocation
-    tags: tags
-    enableTelemetry: enableTelemetry
-    logAnalyticsWorkspaceResourceId: logAnalyticsWorkspaceResourceId
-  }
-}
-
-// ========== WAF: Proximity Placement Group for VM ========== //
-var virtualMachineAvailabilityZone = 1
-module proximityPlacementGroup './modules/compute/proximity-placement-group.bicep' = if (enablePrivateNetworking) {
-  name: take('module.proximity-placement-group.${solutionName}', 64)
-  params: {
-    solutionName: solutionSuffix
-    location: location
-    tags: tags
-    enableTelemetry: enableTelemetry
-    availabilityZone: virtualMachineAvailabilityZone
-    vmSizes: [vmSize]
-  }
-}
-
-// ========== Jumpbox VM — administration access when private networking is enabled ========== //
-// ========== Login is via Microsoft Entra ID through Azure Bastion (not local credentials) ========== //
-module virtualMachine './modules/compute/virtual-machine.bicep' = if (enablePrivateNetworking) {
-  name: take('module.virtual-machine.${solutionName}', 64)
-  params: {
-    solutionName: solutionSuffix
-    location: location
-    tags: tags
-    enableTelemetry: enableTelemetry
-    vmSize: vmSize
-    availabilityZone: virtualMachineAvailabilityZone
-    adminUsername: vmAdminUsername ?? 'testvmuser'
-    adminPassword: vmAdminPassword ?? 'Vm!${uniqueString(subscription().subscriptionId, solutionName)}${guid(subscription().subscriptionId, solutionName, 'vm-admin-password')}'
-    subnetResourceId: virtualNetwork!.outputs.administrationSubnetResourceId
-    deployingUserPrincipalId: deployingUserPrincipalId
-    deployingUserPrincipalType: deployingUserPrincipalType
-    roleAssignments: [
-      {
-        roleDefinitionIdOrName: '1c0163c0-47e6-4577-8991-ea5c82e286e4' // Virtual Machine Administrator Login
-        principalId: deployingUserPrincipalId
-        principalType: deployingUserPrincipalType
-      }
-    ]
-    diagnosticSettings: enableMonitoring ? [{ workspaceResourceId: logAnalyticsWorkspaceResourceId }] : null
-    maintenanceConfigurationResourceId: maintenanceConfiguration!.outputs.resourceId
-    proximityPlacementGroupResourceId: proximityPlacementGroup!.outputs.resourceId
-    extensionMonitoringAgentConfig: enableMonitoring
-      ? {
-          dataCollectionRuleAssociations: [
-            {
-              dataCollectionRuleResourceId: windowsVmDataCollectionRules!.outputs.resourceId
-              name: 'send-${logAnalyticsWorkspaceName}'
-            }
-          ]
-          enabled: true
-          tags: tags
-        }
-      : null
   }
 }
 
@@ -603,44 +478,6 @@ module model_deployments './modules/ai/ai-foundry-model-deployment.bicep' = [
   }
 ]
 
-// ========== Separate PE for AI Foundry to avoid AccountProvisioningStateInvalid race condition ========== //
-module aifoundry_private_endpoint './modules/networking/private-endpoint.bicep' = if (!useExistingAIProject && enablePrivateNetworking) {
-  name: take('module.pe-ai-foundry.${solutionName}', 64)
-  dependsOn: [model_deployments, foundry_search_connection, privateDnsZoneDeployments]
-  params: {
-    name: 'pep-aif-${solutionSuffix}'
-    location: location
-    tags: tags
-    subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-    customNetworkInterfaceName: 'nic-aif-${solutionSuffix}'
-    privateLinkServiceConnections: [
-      {
-        name: 'pep-aif-${solutionSuffix}-connection'
-        properties: {
-          privateLinkServiceId: ai_foundry_project!.outputs.resourceId
-          groupIds: ['account']
-        }
-      }
-    ]
-    privateDnsZoneGroup: {
-      privateDnsZoneGroupConfigs: [
-        {
-          name: 'ai-services-dns-zone-cognitiveservices'
-          privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.cognitiveServices]!.outputs.resourceId
-        }
-        {
-          name: 'ai-services-dns-zone-openai'
-          privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.openAI]!.outputs.resourceId
-        }
-        {
-          name: 'ai-services-dns-zone-aiservices'
-          privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.aiServices]!.outputs.resourceId
-        }
-      ]
-    }
-  }
-}
-
 // ========== AI Search service (called by Foundry connection module, so deployed after the project) ========== //
 module ai_search './modules/ai/ai-search.bicep' = {
   name: take('module.ai-search.${solutionName}', 64)
@@ -694,54 +531,6 @@ module storage_account './modules/data/storage-account.bicep' = {
         principalType: deployingUserPrincipalType
       }
     ]
-    privateEndpoints: enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-blob-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-blob-${solutionSuffix}'
-            service: 'blob'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.storageBlob]!.outputs.resourceId }
-              ]
-            }
-          }
-          {
-            name: 'pep-queue-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-queue-${solutionSuffix}'
-            service: 'queue'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.storageQueue]!.outputs.resourceId }
-              ]
-            }
-          }
-          {
-            name: 'pep-file-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-file-${solutionSuffix}'
-            service: 'file'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.storageFile]!.outputs.resourceId }
-              ]
-            }
-          }
-          {
-            name: 'pep-dfs-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-dfs-${solutionSuffix}'
-            service: 'dfs'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.storageDfs]!.outputs.resourceId }
-              ]
-            }
-          }
-        ]
-      : []
     networkAcls: {
       bypass: 'AzureServices, Logging, Metrics'
       defaultAction: enablePrivateNetworking ? 'Deny' : 'Allow'
@@ -876,94 +665,88 @@ module container_registry './modules/compute/container-registry.bicep' = {
 
 var placeholderImageName = 'DOCKER|mcr.microsoft.com/azuredocs/containerapps-helloworld:latest'
 
-// ========== Backend Deployment ========== //
-module backend_docker './modules/compute/app-service.bicep' = {
-  name: take('module.app-service-backend.${solutionName}', 64)
-  params: {
-    solutionName: 'api-${solutionSuffix}'
-    location: location
-    tags: union(tags, { 'azd-service-name': 'api' })
-    enableTelemetry: enableTelemetry
-    serverFarmResourceId: hostingplan!.outputs.resourceId
-    kind: kind
-    linuxFxVersion: placeholderImageName
-    virtualNetworkSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : ''
-    publicNetworkAccess: enablePrivateNetworking ? 'Disabled' : 'Enabled'
-    vnetRouteAllEnabled: enablePrivateNetworking ? true : false
-    imagePullTraffic: enablePrivateNetworking ? true : false
-    contentShareTraffic: enablePrivateNetworking ? true : false
-    privateEndpoints: enablePrivateNetworking
-      ? [
-          {
-            name: 'pep-api-${solutionSuffix}'
-            customNetworkInterfaceName: 'nic-api-${solutionSuffix}'
-            subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
-            service: 'sites'
-            privateDnsZoneGroup: {
-              privateDnsZoneGroupConfigs: [
-                { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.webApp]!.outputs.resourceId }
-              ]
-            }
-          }
-        ]
-      : []
-    diagnosticSettings: monitoringDiagnosticSettings
-    managedIdentities: { systemAssigned: true }
-    acrUseManagedIdentityCreds: true
-    appSettings: {
-      WEBSITES_PORT: '8000'
-      AZURE_OPENAI_ENDPOINT: aiFoundryEndpoint
-      AZURE_OPENAI_CHAT_DEPLOYMENT: gptModelName
-      AZURE_OPENAI_EMBEDDING_DEPLOYMENT: embeddingModel
-      AZURE_SEARCH_ENDPOINT: ai_search.outputs.endpoint
-      AZURE_SEARCH_INDEX_NAME: 'knowledge-mining-index'
-      AZURE_CONTENT_UNDERSTANDING_ENDPOINT: azureOpenAiCuEndpoint
-      AZURE_STORAGE_ACCOUNT: storage_account.outputs.name
-      AZURE_SQL_SERVER: sqlDBModule!.outputs.serverFqdn
-      AZURE_SQL_DATABASE: sqlDBModule!.outputs.databaseName
-      AZURE_COSMOS_ENDPOINT: deployCosmos ? cosmosDBModule!.outputs.endpoint : ''
-      AZURE_COSMOS_DATABASE: deployCosmos ? 'km-db' : ''
-      AZURE_AD_TENANT_ID: azureAdTenantId
-      AZURE_AD_CLIENT_ID: azureAdClientId
-      AZURE_AI_AGENT_ENDPOINT: projectEndpoint
-      AZURE_AI_SEARCH_CONNECTION_NAME: foundry_search_connection.outputs.connectionName
-      API_APP_NAME: 'api-${solutionSuffix}'
-      APP_FRONTEND_HOSTNAME: 'https://app-${solutionSuffix}.azurewebsites.net'
-      APP_ENV: 'Prod'
-      ADMIN_API_KEY: adminApiKey
-      SOLUTION_SUFFIX: solutionSuffix
-      APPLICATIONINSIGHTS_CONNECTION_STRING: enableMonitoring ? app_insights!.outputs.connectionString : ''
-    }
-  }
+var backendAppSettings = {
+  WEBSITES_PORT: '8000'
+  AZURE_OPENAI_ENDPOINT: aiFoundryEndpoint
+  AZURE_OPENAI_CHAT_DEPLOYMENT: gptModelName
+  AZURE_OPENAI_EMBEDDING_DEPLOYMENT: embeddingModel
+  AZURE_SEARCH_ENDPOINT: ai_search.outputs.endpoint
+  AZURE_SEARCH_INDEX_NAME: 'knowledge-mining-index'
+  AZURE_CONTENT_UNDERSTANDING_ENDPOINT: azureOpenAiCuEndpoint
+  AZURE_STORAGE_ACCOUNT: storage_account.outputs.name
+  AZURE_SQL_SERVER: sqlDBModule!.outputs.serverFqdn
+  AZURE_SQL_DATABASE: sqlDBModule!.outputs.databaseName
+  AZURE_COSMOS_ENDPOINT: deployCosmos ? cosmosDBModule!.outputs.endpoint : ''
+  AZURE_COSMOS_DATABASE: deployCosmos ? 'km-db' : ''
+  AZURE_AD_TENANT_ID: azureAdTenantId
+  AZURE_AD_CLIENT_ID: azureAdClientId
+  AZURE_AI_AGENT_ENDPOINT: projectEndpoint
+  AZURE_AI_SEARCH_CONNECTION_NAME: foundry_search_connection.outputs.connectionName
+  API_APP_NAME: 'api-${solutionSuffix}'
+  APP_FRONTEND_HOSTNAME: 'https://app-${solutionSuffix}.azurewebsites.net'
+  APP_ENV: 'Prod'
+  ADMIN_API_KEY: adminApiKey
+  SOLUTION_SUFFIX: solutionSuffix
+  APPLICATIONINSIGHTS_CONNECTION_STRING: enableMonitoring ? app_insights!.outputs.connectionString : ''
 }
 
-// Frontend
-module frontend_docker './modules/compute/app-service.bicep' = {
-  name: take('module.app-service-frontend.${solutionName}', 64)
-  params: {
-    solutionName: 'app-${solutionSuffix}'
-    location: location
-    tags: union(tags, { 'azd-service-name': 'webapp' })
-    enableTelemetry: enableTelemetry
-    serverFarmResourceId: hostingplan!.outputs.resourceId
-    kind: kind
-    linuxFxVersion: placeholderImageName
-    vnetRouteAllEnabled: enablePrivateNetworking ? true : false
-    imagePullTraffic: enablePrivateNetworking ? true : false
-    contentShareTraffic: enablePrivateNetworking ? true : false
-    virtualNetworkSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : ''
-    publicNetworkAccess: 'Enabled'
-    diagnosticSettings: monitoringDiagnosticSettings
-    managedIdentities: { systemAssigned: true }
-    acrUseManagedIdentityCreds: true
-    appSettings: {
-      WEBSITES_PORT: '80'
-      APPLICATIONINSIGHTS_CONNECTION_STRING: enableMonitoring ? app_insights!.outputs.connectionString : ''
-      APP_API_BASE_URL: enablePrivateNetworking ? '' : 'https://api-${solutionSuffix}.azurewebsites.net'
-      BACKEND_API_HOST: enablePrivateNetworking ? 'api-${solutionSuffix}.azurewebsites.net' : ''
+var frontendAppSettings = {
+  WEBSITES_PORT: '80'
+  APPLICATIONINSIGHTS_CONNECTION_STRING: enableMonitoring ? app_insights!.outputs.connectionString : ''
+  APP_API_BASE_URL: enablePrivateNetworking ? '' : 'https://api-${solutionSuffix}.azurewebsites.net'
+  BACKEND_API_HOST: enablePrivateNetworking ? 'api-${solutionSuffix}.azurewebsites.net' : ''
+}
+
+// Backend (api) and Frontend (webapp) App Services share one inlined template via this loop.
+var appServiceDeployments = [
+  {
+    nameSuffix: 'api'
+    azdServiceName: 'api'
+  }
+  {
+    nameSuffix: 'app'
+    azdServiceName: 'webapp'
+  }
+]
+
+module app_services './modules/compute/app-service.bicep' = [
+  for config in appServiceDeployments: {
+    name: take('module.app-service-${config.nameSuffix}.${solutionName}', 64)
+    params: {
+      solutionName: '${config.nameSuffix}-${solutionSuffix}'
+      location: location
+      tags: union(tags, { 'azd-service-name': config.azdServiceName })
+      enableTelemetry: enableTelemetry
+      serverFarmResourceId: hostingplan!.outputs.resourceId
+      kind: kind
+      linuxFxVersion: placeholderImageName
+      virtualNetworkSubnetId: enablePrivateNetworking ? virtualNetwork!.outputs.webserverfarmSubnetResourceId : ''
+      publicNetworkAccess: config.nameSuffix == 'api' ? (enablePrivateNetworking ? 'Disabled' : 'Enabled') : 'Enabled'
+      vnetRouteAllEnabled: enablePrivateNetworking ? true : false
+      imagePullTraffic: enablePrivateNetworking ? true : false
+      contentShareTraffic: enablePrivateNetworking ? true : false
+      privateEndpoints: (config.nameSuffix == 'api' && enablePrivateNetworking)
+        ? [
+            {
+              name: 'pep-api-${solutionSuffix}'
+              customNetworkInterfaceName: 'nic-api-${solutionSuffix}'
+              subnetResourceId: virtualNetwork!.outputs.backendSubnetResourceId
+              service: 'sites'
+              privateDnsZoneGroup: {
+                privateDnsZoneGroupConfigs: [
+                  { privateDnsZoneResourceId: privateDnsZoneDeployments[dnsZoneIndex.webApp]!.outputs.resourceId }
+                ]
+              }
+            }
+          ]
+        : []
+      diagnosticSettings: monitoringDiagnosticSettings
+      managedIdentities: { systemAssigned: true }
+      acrUseManagedIdentityCreds: true
+      appSettings: config.nameSuffix == 'api' ? backendAppSettings : frontendAppSettings
     }
   }
-}
+]
 
 // ============================================================================
 // Module: Role Assignments (centralized)
@@ -980,12 +763,12 @@ module role_assignments './modules/identity/role-assignments.bicep' = {
     storageAccountResourceId: storage_account.outputs.resourceId
     aiProjectPrincipalId: aiProjectPrincipalId
     aiSearchPrincipalId: ai_search.outputs.identityPrincipalId
-    backendAppServicePrincipalId: backend_docker!.outputs.identityPrincipalId
+    backendAppServicePrincipalId: app_services[0]!.outputs.identityPrincipalId
     cosmosDbAccountName: deployCosmos ? cosmosDBModule!.outputs.name : ''
     containerRegistryResourceId: container_registry.outputs.resourceId
     acrPullPrincipals: [
-      { principalId: backend_docker!.outputs.identityPrincipalId, principalType: 'ServicePrincipal' }
-      { principalId: frontend_docker!.outputs.identityPrincipalId, principalType: 'ServicePrincipal' }
+      { principalId: app_services[0]!.outputs.identityPrincipalId, principalType: 'ServicePrincipal' }
+      { principalId: app_services[1]!.outputs.identityPrincipalId, principalType: 'ServicePrincipal' }
     ]
   }
 }
@@ -996,72 +779,3 @@ module role_assignments './modules/identity/role-assignments.bicep' = {
 
 @description('Azure OpenAI endpoint URL.')
 output AZURE_OPENAI_ENDPOINT string = aiFoundryEndpoint
-
-@description('Azure AI Search endpoint URL.')
-output AZURE_SEARCH_ENDPOINT string = ai_search.outputs.endpoint
-
-@description('Azure Content Understanding endpoint URL.')
-output AZURE_CONTENT_UNDERSTANDING_ENDPOINT string = azureOpenAiCuEndpoint
-
-@description('Azure Storage account name.')
-output AZURE_STORAGE_ACCOUNT string = storage_account.outputs.name
-
-@description('Azure SQL Server FQDN.')
-output AZURE_SQL_SERVER string = sqlDBModule!.outputs.serverFqdn
-
-@description('Azure SQL Database name.')
-output AZURE_SQL_DATABASE string = sqlDBModule!.outputs.databaseName
-
-@description('Backend API application (and SQL contained user) name.')
-output API_APP_NAME string = backend_docker!.outputs.name
-
-@description('Backend API system-assigned managed identity principal ID.')
-output AZURE_API_PRINCIPAL_ID string = backend_docker!.outputs.identityPrincipalId
-
-@description('Azure Cosmos DB endpoint.')
-output AZURE_COSMOS_ENDPOINT string = deployCosmos ? cosmosDBModule!.outputs.endpoint : ''
-
-@description('Azure AI Agent endpoint URL.')
-output AZURE_AI_AGENT_ENDPOINT string = projectEndpoint
-
-@description('Backend API application URL.')
-output API_APP_URL string = backend_docker!.outputs.appUrl
-
-@description('Frontend web application URL.')
-output WEB_APP_URL string = frontend_docker!.outputs.appUrl
-
-@description('Backend service URI (used by azd).')
-output SERVICE_BACKEND_URI string = backend_docker!.outputs.appUrl
-
-@description('Frontend service URI (used by azd).')
-output SERVICE_FRONTEND_URI string = frontend_docker!.outputs.appUrl
-
-@description('AI Search connection name in AI Foundry.')
-output AZURE_AI_SEARCH_CONNECTION_NAME string = foundry_search_connection.outputs.connectionName
-
-@description('Azure Container Registry name.')
-output ACR_NAME string = container_registry.outputs.name
-
-@description('Azure Container Registry login server URL.')
-output ACR_LOGIN_SERVER string = container_registry.outputs.loginServer
-
-@description('Backend container image repository name to build and push to ACR.')
-output BACKEND_CONTAINER_IMAGE_NAME string = backendContainerImageName
-
-@description('Backend container image tag to build and push to ACR.')
-output BACKEND_CONTAINER_IMAGE_TAG string = backendContainerImageTag
-
-@description('Frontend container image repository name to build and push to ACR.')
-output FRONTEND_CONTAINER_IMAGE_NAME string = frontendContainerImageName
-
-@description('Frontend container image tag to build and push to ACR.')
-output FRONTEND_CONTAINER_IMAGE_TAG string = frontendContainerImageTag
-
-@description('Frontend web application (App Service) name.')
-output FRONTEND_APP_NAME string = frontend_docker!.outputs.name
-
-@description('Resource group name.')
-output RESOURCE_GROUP_NAME string = resourceGroup().name
-
-@description('Solution resource token suffix used in resource names.')
-output SOLUTION_SUFFIX string = solutionSuffix
